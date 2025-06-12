@@ -1,252 +1,210 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Palette, Binary, Shield, Zap, Code, Monitor, 
-  ChevronRight, CheckCircle, XCircle, RotateCcw, 
-  Play, Settings, BookOpen, Target, Award,
-  ExternalLink, Lightbulb, Brain, Eye, EyeOff,
-  AlertTriangle, Lock, Wifi, Database, Globe,
-  ArrowRight, Star, Trophy, Sparkles
+  Palette, 
+  Shield, 
+  Cpu, 
+  Binary, 
+  Key, 
+  Code, 
+  Monitor, 
+  Zap, 
+  Target, 
+  Award,
+  CheckCircle,
+  XCircle,
+  RotateCcw,
+  Info,
+  ExternalLink,
+  BookOpen,
+  Globe,
+  FileText,
+  Download
 } from 'lucide-react';
 
 const PracticeTools: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('rgb');
-  const [rgbMode, setRgbMode] = useState<'practice' | 'converter'>('practice');
-  const [binaryMode, setBinaryMode] = useState<'practice' | 'converter'>('practice');
-  const [cipherMode, setCipherMode] = useState<'practice' | 'encoder'>('practice');
-  const [logicMode, setLogicMode] = useState<'practice' | 'simulator'>('practice');
-  const [cybersecurityMode, setCybersecurityMode] = useState<'practice' | 'guide'>('practice');
+  const [selectedTool, setSelectedTool] = useState('color-converter');
+  const [currentView, setCurrentView] = useState<'info' | 'quiz'>('info');
 
-  // RGB Practice State
-  const [rgbQuestion, setRgbQuestion] = useState({ r: 255, g: 0, b: 0 });
-  const [rgbAnswer, setRgbAnswer] = useState('');
-  const [rgbScore, setRgbScore] = useState(0);
-  const [rgbTotal, setRgbTotal] = useState(0);
-  const [rgbShowResult, setRgbShowResult] = useState(false);
-  const [rgbCorrect, setRgbCorrect] = useState(false);
+  const tools = [
+    {
+      id: 'color-converter',
+      title: 'Color Converter',
+      description: 'Convert between RGB, HEX, and HSL color formats',
+      icon: Palette,
+      color: 'bg-gradient-to-br from-pink-500 to-purple-600',
+      hoverColor: 'hover:from-pink-600 hover:to-purple-700'
+    },
+    {
+      id: 'cryptography',
+      title: 'Cryptography & Ciphers',
+      description: 'Learn about encryption, decryption, and cipher techniques',
+      icon: Key,
+      color: 'bg-gradient-to-br from-blue-500 to-indigo-600',
+      hoverColor: 'hover:from-blue-600 hover:to-indigo-700'
+    },
+    {
+      id: 'binary-practice',
+      title: 'Binary Practice',
+      description: 'Master binary, decimal, and hexadecimal conversions',
+      icon: Binary,
+      color: 'bg-gradient-to-br from-green-500 to-emerald-600',
+      hoverColor: 'hover:from-green-600 hover:to-emerald-700'
+    },
+    {
+      id: 'logic-gates',
+      title: 'Logic Gate Simulator',
+      description: 'Explore digital logic gates and Boolean operations',
+      icon: Cpu,
+      color: 'bg-gradient-to-br from-orange-500 to-red-600',
+      hoverColor: 'hover:from-orange-600 hover:to-red-700'
+    },
+    {
+      id: 'cybersecurity',
+      title: 'Cybersecurity Scenarios',
+      description: 'Learn about digital security and safe computing practices',
+      icon: Shield,
+      color: 'bg-gradient-to-br from-teal-500 to-cyan-600',
+      hoverColor: 'hover:from-teal-600 hover:to-cyan-700'
+    },
+    {
+      id: 'python-resources',
+      title: 'Python Resources',
+      description: 'Essential Python programming resources and practice platforms',
+      icon: Code,
+      color: 'bg-gradient-to-br from-yellow-500 to-amber-600',
+      hoverColor: 'hover:from-yellow-600 hover:to-amber-700'
+    }
+  ];
 
-  // RGB Converter State
-  const [rgbR, setRgbR] = useState(255);
-  const [rgbG, setRgbG] = useState(128);
-  const [rgbB, setRgbB] = useState(0);
-  const [hexInput, setHexInput] = useState('#FF8000');
+  const renderToolContent = () => {
+    switch (selectedTool) {
+      case 'color-converter':
+        return <ColorConverter currentView={currentView} setCurrentView={setCurrentView} />;
+      case 'cryptography':
+        return <CryptographyTool />;
+      case 'binary-practice':
+        return <BinaryPractice />;
+      case 'logic-gates':
+        return <LogicGateSimulator />;
+      case 'cybersecurity':
+        return <CybersecurityScenarios />;
+      case 'python-resources':
+        return <PythonResources />;
+      default:
+        return <ColorConverter currentView={currentView} setCurrentView={setCurrentView} />;
+    }
+  };
 
-  // Binary Practice State
-  const [binaryQuestion, setBinaryQuestion] = useState({ type: 'decimal-to-binary', value: 42 });
-  const [binaryAnswer, setBinaryAnswer] = useState('');
-  const [binaryScore, setBinaryScore] = useState(0);
-  const [binaryTotal, setBinaryTotal] = useState(0);
-  const [binaryShowResult, setBinaryShowResult] = useState(false);
-  const [binaryCorrect, setBinaryCorrect] = useState(false);
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-green-600 to-purple-600 bg-clip-text text-transparent mb-4">
+          Practice Tools
+        </h1>
+        <p className="text-xl text-gray-600">
+          Interactive tools to master APCSP concepts through hands-on practice
+        </p>
+      </div>
 
-  // Binary Converter State
-  const [decimalInput, setDecimalInput] = useState(42);
-  const [binaryInput, setBinaryInput] = useState('101010');
+      {/* Tool Selection */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {tools.map((tool) => {
+          const Icon = tool.icon;
+          const isSelected = selectedTool === tool.id;
+          
+          return (
+            <button
+              key={tool.id}
+              onClick={() => {
+                setSelectedTool(tool.id);
+                setCurrentView('info');
+              }}
+              className={`p-6 rounded-2xl border-2 transition-all duration-300 transform hover:scale-105 text-left ${
+                isSelected
+                  ? 'border-blue-500 bg-blue-50 shadow-xl'
+                  : 'border-gray-200 hover:border-blue-300 hover:shadow-lg'
+              }`}
+            >
+              <div className="flex items-start space-x-4">
+                <div className={`${tool.color} ${tool.hoverColor} p-3 rounded-xl shadow-lg transition-all duration-300 ${isSelected ? 'scale-110' : ''}`}>
+                  <Icon className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className={`font-bold text-lg mb-2 transition-colors ${isSelected ? 'text-blue-600' : 'text-gray-900'}`}>
+                    {tool.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {tool.description}
+                  </p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
-  // Cipher Practice State
-  const [cipherQuestion, setCipherQuestion] = useState({ text: 'KHOOR', shift: 3, original: 'HELLO' });
-  const [cipherAnswer, setCipherAnswer] = useState('');
-  const [cipherScore, setCipherScore] = useState(0);
-  const [cipherTotal, setCipherTotal] = useState(0);
-  const [cipherShowResult, setCipherShowResult] = useState(false);
-  const [cipherCorrect, setCipherCorrect] = useState(false);
+      {/* Tool Content */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        {renderToolContent()}
+      </div>
+    </div>
+  );
+};
 
-  // Cipher Encoder State
-  const [plainText, setPlainText] = useState('HELLO WORLD');
-  const [cipherShift, setCipherShift] = useState(3);
+// Color Converter Component
+const ColorConverter: React.FC<{ currentView: 'info' | 'quiz'; setCurrentView: (view: 'info' | 'quiz') => void }> = ({ currentView, setCurrentView }) => {
+  const [rgb, setRgb] = useState({ r: 255, g: 0, b: 0 });
+  const [hex, setHex] = useState('#FF0000');
+  const [hsl, setHsl] = useState({ h: 0, s: 100, l: 50 });
+  
+  // Quiz state
+  const [quizScore, setQuizScore] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
 
-  // Logic Gates Practice State
-  const [logicQuestion, setLogicQuestion] = useState({ gate: 'AND', inputs: [true, false], output: false });
-  const [logicAnswer, setLogicAnswer] = useState<boolean | null>(null);
-  const [logicScore, setLogicScore] = useState(0);
-  const [logicTotal, setLogicTotal] = useState(0);
-  const [logicShowResult, setLogicShowResult] = useState(false);
-  const [logicCorrect, setLogicCorrect] = useState(false);
-
-  // Logic Simulator State
-  const [gateType, setGateType] = useState('AND');
-  const [input1, setInput1] = useState(false);
-  const [input2, setInput2] = useState(false);
-
-  // Cybersecurity Practice State
-  const [cybersecurityQuestion, setCybersecurityQuestion] = useState({
-    scenario: "You receive an email claiming to be from your bank asking you to click a link to verify your account information due to suspicious activity.",
-    options: ["Phishing", "DDoS Attack", "Malware", "Not an attack"],
-    correct: 0,
-    explanation: "This is a classic phishing attack. Banks never ask for account verification through email links."
-  });
-  const [cybersecurityAnswer, setCybersecurityAnswer] = useState<number | null>(null);
-  const [cybersecurityScore, setCybersecurityScore] = useState(0);
-  const [cybersecurityTotal, setCybersecurityTotal] = useState(0);
-  const [cybersecurityShowResult, setCybersecurityShowResult] = useState(false);
-  const [cybersecurityCorrect, setCybersecurityCorrect] = useState(false);
-
-  // Helper Functions
-  const generateRgbQuestion = () => {
+  const generateQuizQuestion = () => {
     const r = Math.floor(Math.random() * 256);
     const g = Math.floor(Math.random() * 256);
     const b = Math.floor(Math.random() * 256);
-    setRgbQuestion({ r, g, b });
-    setRgbAnswer('');
-    setRgbShowResult(false);
-  };
-
-  const handleRgbAnswer = () => {
-    const correctHex = `#${rgbQuestion.r.toString(16).padStart(2, '0')}${rgbQuestion.g.toString(16).padStart(2, '0')}${rgbQuestion.b.toString(16).padStart(2, '0')}`.toUpperCase();
-    const userHex = rgbAnswer.toUpperCase();
-    const isCorrect = userHex === correctHex;
     
-    setRgbCorrect(isCorrect);
-    setRgbShowResult(true);
-    setRgbTotal(prev => prev + 1);
-    if (isCorrect) {
-      setRgbScore(prev => prev + 1);
-    }
-  };
-
-  const generateBinaryQuestion = () => {
-    const type = Math.random() > 0.5 ? 'decimal-to-binary' : 'binary-to-decimal';
-    if (type === 'decimal-to-binary') {
-      const value = Math.floor(Math.random() * 256);
-      setBinaryQuestion({ type, value });
-    } else {
-      const value = Math.floor(Math.random() * 256);
-      setBinaryQuestion({ type, value: parseInt(value.toString(2), 2) });
-    }
-    setBinaryAnswer('');
-    setBinaryShowResult(false);
-  };
-
-  const handleBinaryAnswer = () => {
-    let correctAnswer = '';
-    if (binaryQuestion.type === 'decimal-to-binary') {
-      correctAnswer = binaryQuestion.value.toString(2);
-    } else {
-      correctAnswer = parseInt(binaryQuestion.value.toString(2), 2).toString();
-    }
+    const correctHex = `#${r.toString(16).padStart(2, '0').toUpperCase()}${g.toString(16).padStart(2, '0').toUpperCase()}${b.toString(16).padStart(2, '0').toUpperCase()}`;
     
-    const isCorrect = binaryAnswer === correctAnswer;
-    setBinaryCorrect(isCorrect);
-    setBinaryShowResult(true);
-    setBinaryTotal(prev => prev + 1);
-    if (isCorrect) {
-      setBinaryScore(prev => prev + 1);
-    }
-  };
-
-  const generateCipherQuestion = () => {
-    const words = ['HELLO', 'WORLD', 'COMPUTER', 'SCIENCE', 'PYTHON', 'CODING', 'ALGORITHM', 'DATA'];
-    const original = words[Math.floor(Math.random() * words.length)];
-    const shift = Math.floor(Math.random() * 25) + 1;
-    const encrypted = caesarCipher(original, shift);
-    setCipherQuestion({ text: encrypted, shift, original });
-    setCipherAnswer('');
-    setCipherShowResult(false);
-  };
-
-  const caesarCipher = (text: string, shift: number) => {
-    return text.split('').map(char => {
-      if (char.match(/[A-Z]/)) {
-        return String.fromCharCode(((char.charCodeAt(0) - 65 + shift) % 26) + 65);
+    const options = [correctHex];
+    while (options.length < 5) {
+      const randomR = Math.floor(Math.random() * 256);
+      const randomG = Math.floor(Math.random() * 256);
+      const randomB = Math.floor(Math.random() * 256);
+      const randomHex = `#${randomR.toString(16).padStart(2, '0').toUpperCase()}${randomG.toString(16).padStart(2, '0').toUpperCase()}${randomB.toString(16).padStart(2, '0').toUpperCase()}`;
+      
+      if (!options.includes(randomHex)) {
+        options.push(randomHex);
       }
-      return char;
-    }).join('');
-  };
-
-  const handleCipherAnswer = () => {
-    const isCorrect = cipherAnswer.toUpperCase() === cipherQuestion.original;
-    setCipherCorrect(isCorrect);
-    setCipherShowResult(true);
-    setCipherTotal(prev => prev + 1);
-    if (isCorrect) {
-      setCipherScore(prev => prev + 1);
-    }
-  };
-
-  const generateLogicQuestion = () => {
-    const gates = ['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'];
-    const gate = gates[Math.floor(Math.random() * gates.length)];
-    const input1 = Math.random() > 0.5;
-    const input2 = Math.random() > 0.5;
-    let output = false;
-    
-    switch (gate) {
-      case 'AND': output = input1 && input2; break;
-      case 'OR': output = input1 || input2; break;
-      case 'NOT': output = !input1; break;
-      case 'NAND': output = !(input1 && input2); break;
-      case 'NOR': output = !(input1 || input2); break;
-      case 'XOR': output = input1 !== input2; break;
     }
     
-    setLogicQuestion({ gate, inputs: [input1, input2], output });
-    setLogicAnswer(null);
-    setLogicShowResult(false);
-  };
-
-  const handleLogicAnswer = (answer: boolean) => {
-    setLogicAnswer(answer);
-    const isCorrect = answer === logicQuestion.output;
-    setLogicCorrect(isCorrect);
-    setLogicShowResult(true);
-    setLogicTotal(prev => prev + 1);
-    if (isCorrect) {
-      setLogicScore(prev => prev + 1);
+    // Shuffle options
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
     }
-  };
-
-  const generateCybersecurityQuestion = () => {
-    const scenarios = [
-      {
-        scenario: "You receive an email claiming to be from your bank asking you to click a link to verify your account information due to suspicious activity.",
-        options: ["Phishing", "DDoS Attack", "Malware", "Not an attack"],
-        correct: 0,
-        explanation: "This is a classic phishing attack. Banks never ask for account verification through email links."
-      },
-      {
-        scenario: "A website you're trying to visit is extremely slow and eventually times out. Other websites work fine.",
-        options: ["Phishing", "DDoS Attack", "Malware", "Network Issue"],
-        correct: 1,
-        explanation: "This could be a DDoS attack overwhelming the website's servers with traffic."
-      },
-      {
-        scenario: "Your computer starts running very slowly and you notice unknown programs running in the background.",
-        options: ["Phishing", "DDoS Attack", "Malware", "Normal Operation"],
-        correct: 2,
-        explanation: "Unknown programs running and slow performance are common signs of malware infection."
-      }
-    ];
     
-    const question = scenarios[Math.floor(Math.random() * scenarios.length)];
-    setCybersecurityQuestion(question);
-    setCybersecurityAnswer(null);
-    setCybersecurityShowResult(false);
+    return {
+      rgb: `RGB(${r}, ${g}, ${b})`,
+      correctAnswer: correctHex,
+      options,
+      correctIndex: options.indexOf(correctHex)
+    };
   };
 
-  const handleCybersecurityAnswer = (answer: number) => {
-    setCybersecurityAnswer(answer);
-    const isCorrect = answer === cybersecurityQuestion.correct;
-    setCybersecurityCorrect(isCorrect);
-    setCybersecurityShowResult(true);
-    setCybersecurityTotal(prev => prev + 1);
-    if (isCorrect) {
-      setCybersecurityScore(prev => prev + 1);
-    }
-  };
-
-  const calculateGateOutput = (gate: string, input1: boolean, input2: boolean) => {
-    switch (gate) {
-      case 'AND': return input1 && input2;
-      case 'OR': return input1 || input2;
-      case 'NOT': return !input1;
-      case 'NAND': return !(input1 && input2);
-      case 'NOR': return !(input1 || input2);
-      case 'XOR': return input1 !== input2;
-      default: return false;
-    }
-  };
+  useEffect(() => {
+    const questions = Array.from({ length: 10 }, () => generateQuizQuestion());
+    setQuizQuestions(questions);
+  }, []);
 
   const rgbToHex = (r: number, g: number, b: number) => {
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+    return `#${r.toString(16).padStart(2, '0').toUpperCase()}${g.toString(16).padStart(2, '0').toUpperCase()}${b.toString(16).padStart(2, '0').toUpperCase()}`;
   };
 
   const hexToRgb = (hex: string) => {
@@ -258,1353 +216,1500 @@ const PracticeTools: React.FC = () => {
     } : null;
   };
 
-  const decimalToBinary = (decimal: number) => {
-    return decimal.toString(2);
+  const rgbToHsl = (r: number, g: number, b: number) => {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+
+    return {
+      h: Math.round(h * 360),
+      s: Math.round(s * 100),
+      l: Math.round(l * 100)
+    };
   };
 
-  const binaryToDecimal = (binary: string) => {
-    return parseInt(binary, 2);
+  const updateFromRgb = (newRgb: typeof rgb) => {
+    setRgb(newRgb);
+    setHex(rgbToHex(newRgb.r, newRgb.g, newRgb.b));
+    setHsl(rgbToHsl(newRgb.r, newRgb.g, newRgb.b));
   };
 
-  const tabs = [
-    { id: 'rgb', label: 'RGB Colors', icon: Palette, color: 'from-pink-500 to-rose-600' },
-    { id: 'binary', label: 'Binary Numbers', icon: Binary, color: 'from-blue-500 to-cyan-600' },
-    { id: 'cipher', label: 'Cryptography', icon: Shield, color: 'from-purple-500 to-violet-600' },
-    { id: 'logic', label: 'Logic Gates', icon: Zap, color: 'from-green-500 to-emerald-600' },
-    { id: 'cybersecurity', label: 'Cybersecurity', icon: Lock, color: 'from-red-500 to-orange-600' },
-    { id: 'python', label: 'Python Resources', icon: Code, color: 'from-yellow-500 to-amber-600' }
+  const updateFromHex = (newHex: string) => {
+    setHex(newHex);
+    const rgbResult = hexToRgb(newHex);
+    if (rgbResult) {
+      setRgb(rgbResult);
+      setHsl(rgbToHsl(rgbResult.r, rgbResult.g, rgbResult.b));
+    }
+  };
+
+  const handleQuizAnswer = (answerIndex: number) => {
+    if (showResult) return;
+    
+    setSelectedAnswer(answerIndex);
+    setShowResult(true);
+    
+    if (answerIndex === quizQuestions[currentQuestion]?.correctIndex) {
+      setQuizScore(prev => prev + 1);
+    }
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestion < quizQuestions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      setCurrentQuestion(0);
+      setQuizScore(0);
+    }
+    setSelectedAnswer(null);
+    setShowResult(false);
+  };
+
+  const resetQuiz = () => {
+    setCurrentQuestion(0);
+    setQuizScore(0);
+    setSelectedAnswer(null);
+    setShowResult(false);
+    const questions = Array.from({ length: 10 }, () => generateQuizQuestion());
+    setQuizQuestions(questions);
+  };
+
+  if (currentView === 'quiz') {
+    const question = quizQuestions[currentQuestion];
+    if (!question) return <div>Loading...</div>;
+
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => setCurrentView('info')}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            ← Back to Converter
+          </button>
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900">Color Quiz</h2>
+            <p className="text-gray-600">Question {currentQuestion + 1} of {quizQuestions.length}</p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-green-600">{quizScore}</div>
+            <div className="text-sm text-gray-600">Score</div>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 mb-8 text-center border border-blue-200">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Convert this RGB value to HEX:</h3>
+            <div className="text-3xl font-mono font-bold text-blue-600 mb-4">
+              {question.rgb}
+            </div>
+            <div 
+              className="w-24 h-24 rounded-lg mx-auto border-4 border-white shadow-lg"
+              style={{ backgroundColor: question.rgb.replace('RGB', 'rgb') }}
+            ></div>
+          </div>
+
+          <div className="space-y-4 mb-8">
+            {question.options.map((option: string, index: number) => (
+              <button
+                key={index}
+                onClick={() => handleQuizAnswer(index)}
+                disabled={showResult}
+                className={`w-full p-4 rounded-xl border-2 transition-all duration-300 text-left ${
+                  showResult
+                    ? index === question.correctIndex
+                      ? 'border-green-500 bg-green-50 text-green-800'
+                      : index === selectedAnswer && index !== question.correctIndex
+                      ? 'border-red-500 bg-red-50 text-red-800'
+                      : 'border-gray-200 bg-gray-50 text-gray-600'
+                    : selectedAnswer === index
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                }`}
+              >
+                <div className="flex items-center space-x-4">
+                  <div 
+                    className="w-12 h-12 rounded-lg border-2 border-gray-300"
+                    style={{ backgroundColor: option }}
+                  ></div>
+                  <span className="font-mono text-lg font-bold">{option}</span>
+                  {showResult && index === question.correctIndex && (
+                    <CheckCircle className="h-6 w-6 text-green-600 ml-auto" />
+                  )}
+                  {showResult && index === selectedAnswer && index !== question.correctIndex && (
+                    <XCircle className="h-6 w-6 text-red-600 ml-auto" />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {showResult && (
+            <div className="text-center space-y-4">
+              <div className={`text-lg font-medium ${selectedAnswer === question.correctIndex ? 'text-green-600' : 'text-blue-600'}`}>
+                {selectedAnswer === question.correctIndex ? '🎉 Correct!' : '💪 Keep practicing!'}
+              </div>
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={nextQuestion}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-colors"
+                >
+                  {currentQuestion < quizQuestions.length - 1 ? 'Next Question' : 'Start Over'}
+                </button>
+                <button
+                  onClick={resetQuiz}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  <span>Reset Quiz</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Color Converter</h2>
+          <p className="text-gray-600 text-lg">Convert between RGB, HEX, and HSL color formats</p>
+        </div>
+        <button
+          onClick={() => setCurrentView('quiz')}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+        >
+          <Target className="h-5 w-5" />
+          <span>Practice Quiz</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Color Preview */}
+        <div className="space-y-6">
+          <div className="text-center">
+            <div 
+              className="w-full h-64 rounded-2xl border-4 border-white shadow-xl mb-4"
+              style={{ backgroundColor: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` }}
+            ></div>
+            <div className="text-2xl font-bold text-gray-900">Color Preview</div>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="space-y-6">
+          {/* RGB Controls */}
+          <div className="bg-red-50 rounded-xl p-6 border border-red-200">
+            <h3 className="text-xl font-bold text-red-800 mb-4">RGB Values</h3>
+            <div className="space-y-4">
+              {(['r', 'g', 'b'] as const).map((channel) => (
+                <div key={channel}>
+                  <label className="block text-sm font-medium text-red-700 mb-2">
+                    {channel.toUpperCase()}: {rgb[channel]}
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="255"
+                    value={rgb[channel]}
+                    onChange={(e) => updateFromRgb({ ...rgb, [channel]: parseInt(e.target.value) })}
+                    className="w-full h-2 bg-red-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 p-3 bg-white rounded-lg border">
+              <span className="font-mono text-lg">rgb({rgb.r}, {rgb.g}, {rgb.b})</span>
+            </div>
+          </div>
+
+          {/* HEX Control */}
+          <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+            <h3 className="text-xl font-bold text-blue-800 mb-4">HEX Value</h3>
+            <input
+              type="text"
+              value={hex}
+              onChange={(e) => updateFromHex(e.target.value)}
+              className="w-full p-3 border border-blue-300 rounded-lg font-mono text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="#FF0000"
+            />
+          </div>
+
+          {/* HSL Display */}
+          <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+            <h3 className="text-xl font-bold text-purple-800 mb-4">HSL Values</h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-sm text-purple-600 font-medium">Hue</div>
+                <div className="text-2xl font-bold text-purple-800">{hsl.h}°</div>
+              </div>
+              <div>
+                <div className="text-sm text-purple-600 font-medium">Saturation</div>
+                <div className="text-2xl font-bold text-purple-800">{hsl.s}%</div>
+              </div>
+              <div>
+                <div className="text-sm text-purple-600 font-medium">Lightness</div>
+                <div className="text-2xl font-bold text-purple-800">{hsl.l}%</div>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-white rounded-lg border">
+              <span className="font-mono text-lg">hsl({hsl.h}, {hsl.s}%, {hsl.l}%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Information Section */}
+      <div className="mt-12 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 rounded-2xl p-8 border border-blue-200">
+        <div className="text-center mb-8">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            🎨 Color Theory & Digital Representation
+          </h3>
+          <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+            Understanding color representation is fundamental in computer science and digital design. 
+            Colors are encoded using mathematical systems that computers can process and display.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-red-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <span className="text-white font-bold text-xl">RGB</span>
+              </div>
+              <h4 className="text-2xl font-bold text-red-800">RGB Color Model</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Red, Green, Blue</strong> - Additive color model</p>
+              <p><strong>Range:</strong> 0-255 for each channel</p>
+              <p><strong>Total Colors:</strong> 16.7 million combinations</p>
+              <p><strong>Usage:</strong> Digital displays, web design</p>
+              <p><strong>Memory:</strong> 24 bits (8 bits per channel)</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-blue-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <span className="text-white font-bold text-xl">HEX</span>
+              </div>
+              <h4 className="text-2xl font-bold text-blue-800">Hexadecimal</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Base-16</strong> number system</p>
+              <p><strong>Format:</strong> #RRGGBB</p>
+              <p><strong>Digits:</strong> 0-9, A-F</p>
+              <p><strong>Compact:</strong> 6 characters represent 24 bits</p>
+              <p><strong>Web Standard:</strong> CSS and HTML</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <span className="text-white font-bold text-xl">HSL</span>
+              </div>
+              <h4 className="text-2xl font-bold text-purple-800">HSL Model</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Hue:</strong> Color wheel position (0-360°)</p>
+              <p><strong>Saturation:</strong> Color intensity (0-100%)</p>
+              <p><strong>Lightness:</strong> Brightness level (0-100%)</p>
+              <p><strong>Intuitive:</strong> Matches human perception</p>
+              <p><strong>Design:</strong> Easy color manipulation</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 text-center">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 max-w-4xl mx-auto">
+            <h4 className="text-2xl font-bold text-gray-800 mb-4">💡 Pro Tips for APCSP</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg text-gray-700">
+              <div className="text-left space-y-2">
+                <p><strong>Binary Connection:</strong> Each RGB channel uses 8 bits (1 byte)</p>
+                <p><strong>Hexadecimal Math:</strong> FF = 255 in decimal = 11111111 in binary</p>
+                <p><strong>Color Depth:</strong> 24-bit color = 2²⁴ = 16,777,216 colors</p>
+              </div>
+              <div className="text-left space-y-2">
+                <p><strong>Web Standards:</strong> HEX is preferred for CSS styling</p>
+                <p><strong>Accessibility:</strong> Consider contrast ratios for readability</p>
+                <p><strong>Compression:</strong> Color reduction saves file size</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Cryptography Tool Component
+const CryptographyTool: React.FC = () => {
+  const [message, setMessage] = useState('HELLO WORLD');
+  const [shift, setShift] = useState(3);
+  const [encryptedMessage, setEncryptedMessage] = useState('');
+  const [selectedCipher, setSelectedCipher] = useState('caesar');
+
+  const caesarCipher = (text: string, shift: number) => {
+    return text.split('').map(char => {
+      if (char.match(/[A-Z]/)) {
+        return String.fromCharCode(((char.charCodeAt(0) - 65 + shift) % 26) + 65);
+      } else if (char.match(/[a-z]/)) {
+        return String.fromCharCode(((char.charCodeAt(0) - 97 + shift) % 26) + 97);
+      }
+      return char;
+    }).join('');
+  };
+
+  const atbashCipher = (text: string) => {
+    return text.split('').map(char => {
+      if (char.match(/[A-Z]/)) {
+        return String.fromCharCode(90 - (char.charCodeAt(0) - 65));
+      } else if (char.match(/[a-z]/)) {
+        return String.fromCharCode(122 - (char.charCodeAt(0) - 97));
+      }
+      return char;
+    }).join('');
+  };
+
+  useEffect(() => {
+    if (selectedCipher === 'caesar') {
+      setEncryptedMessage(caesarCipher(message, shift));
+    } else if (selectedCipher === 'atbash') {
+      setEncryptedMessage(atbashCipher(message));
+    }
+  }, [message, shift, selectedCipher]);
+
+  return (
+    <div className="p-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Cryptography & Ciphers</h2>
+        <p className="text-gray-600 text-lg">Explore encryption and decryption techniques</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Cipher Controls */}
+        <div className="space-y-6">
+          <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+            <h3 className="text-xl font-bold text-blue-800 mb-4">Cipher Selection</h3>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3">
+                <input
+                  type="radio"
+                  value="caesar"
+                  checked={selectedCipher === 'caesar'}
+                  onChange={(e) => setSelectedCipher(e.target.value)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className="text-lg font-medium">Caesar Cipher</span>
+              </label>
+              <label className="flex items-center space-x-3">
+                <input
+                  type="radio"
+                  value="atbash"
+                  checked={selectedCipher === 'atbash'}
+                  onChange={(e) => setSelectedCipher(e.target.value)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className="text-lg font-medium">Atbash Cipher</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+            <h3 className="text-xl font-bold text-green-800 mb-4">Message Input</h3>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value.toUpperCase())}
+              className="w-full p-3 border border-green-300 rounded-lg font-mono text-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              rows={3}
+              placeholder="Enter your message..."
+            />
+          </div>
+
+          {selectedCipher === 'caesar' && (
+            <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+              <h3 className="text-xl font-bold text-purple-800 mb-4">Shift Value: {shift}</h3>
+              <input
+                type="range"
+                min="1"
+                max="25"
+                value={shift}
+                onChange={(e) => setShift(parseInt(e.target.value))}
+                className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer"
+              />
+              <div className="flex justify-between text-sm text-purple-600 mt-2">
+                <span>1</span>
+                <span>25</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Results */}
+        <div className="space-y-6">
+          <div className="bg-red-50 rounded-xl p-6 border border-red-200">
+            <h3 className="text-xl font-bold text-red-800 mb-4">Encrypted Message</h3>
+            <div className="p-4 bg-white rounded-lg border font-mono text-lg min-h-[100px] flex items-center">
+              {encryptedMessage || 'Encrypted message will appear here...'}
+            </div>
+          </div>
+
+          <div className="bg-yellow-50 rounded-xl p-6 border border-yellow-200">
+            <h3 className="text-xl font-bold text-yellow-800 mb-4">Cipher Information</h3>
+            {selectedCipher === 'caesar' ? (
+              <div className="space-y-2 text-lg text-yellow-700">
+                <p><strong>Type:</strong> Substitution Cipher</p>
+                <p><strong>Method:</strong> Shift each letter by {shift} positions</p>
+                <p><strong>Security:</strong> Very weak (only 25 possible keys)</p>
+                <p><strong>History:</strong> Used by Julius Caesar</p>
+              </div>
+            ) : (
+              <div className="space-y-2 text-lg text-yellow-700">
+                <p><strong>Type:</strong> Substitution Cipher</p>
+                <p><strong>Method:</strong> Replace A↔Z, B↔Y, C↔X, etc.</p>
+                <p><strong>Security:</strong> Weak (monoalphabetic)</p>
+                <p><strong>History:</strong> Ancient Hebrew cipher</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Cryptography Facts */}
+      <div className="mt-12 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-8 border border-blue-200">
+        <div className="text-center mb-8">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            🔐 Cryptography in Computer Science
+          </h3>
+          <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+            Cryptography is essential for digital security, protecting everything from online banking 
+            to private messages. Understanding encryption principles is crucial for cybersecurity.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-blue-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Key className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-blue-800">Symmetric Encryption</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Same Key:</strong> Encrypt and decrypt with one key</p>
+              <p><strong>Fast:</strong> Efficient for large amounts of data</p>
+              <p><strong>Examples:</strong> AES, DES, Caesar Cipher</p>
+              <p><strong>Challenge:</strong> Secure key distribution</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-purple-800">Asymmetric Encryption</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Key Pair:</strong> Public and private keys</p>
+              <p><strong>Secure:</strong> No shared secret needed</p>
+              <p><strong>Examples:</strong> RSA, ECC</p>
+              <p><strong>Usage:</strong> Digital signatures, HTTPS</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-green-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Zap className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-green-800">Hash Functions</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>One-Way:</strong> Cannot be reversed</p>
+              <p><strong>Fixed Size:</strong> Always same output length</p>
+              <p><strong>Examples:</strong> SHA-256, MD5</p>
+              <p><strong>Uses:</strong> Passwords, data integrity</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Alphabet Reference */}
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 mb-8">
+          <h4 className="text-2xl font-bold text-gray-800 mb-4 text-center">📝 Alphabet Reference</h4>
+          <div className="grid grid-cols-13 gap-2 text-center">
+            {Array.from({ length: 26 }, (_, i) => {
+              const letter = String.fromCharCode(65 + i);
+              const number = i + 1;
+              return (
+                <div key={i} className="bg-gray-50 rounded-lg p-2 border">
+                  <div className="font-bold text-lg text-gray-800">{letter}</div>
+                  <div className="text-sm text-gray-600">{number}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tesla STEM Puzzles PDF */}
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-orange-200">
+          <div className="text-center">
+            <h4 className="text-2xl font-bold text-orange-800 mb-4">📚 Additional Resources</h4>
+            <div className="flex items-center justify-center space-x-4">
+              <FileText className="h-8 w-8 text-orange-600" />
+              <div className="text-left">
+                <h5 className="text-xl font-bold text-orange-800">Tesla STEM Puzzles Book 2025</h5>
+                <p className="text-lg text-orange-700">Computational Tesla Puzzles</p>
+              </div>
+              <a
+                href="/cryptography/Computational Tesla Puzzles 2025.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2"
+              >
+                <Download className="h-5 w-5" />
+                <span>Download PDF</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Binary Practice Component
+const BinaryPractice: React.FC = () => {
+  const [decimal, setDecimal] = useState(42);
+  const [binary, setBinary] = useState('101010');
+  const [hex, setHex] = useState('2A');
+
+  const decimalToBinary = (num: number) => {
+    return num.toString(2);
+  };
+
+  const decimalToHex = (num: number) => {
+    return num.toString(16).toUpperCase();
+  };
+
+  const binaryToDecimal = (bin: string) => {
+    return parseInt(bin, 2);
+  };
+
+  const hexToDecimal = (hex: string) => {
+    return parseInt(hex, 16);
+  };
+
+  const updateFromDecimal = (num: number) => {
+    if (num >= 0 && num <= 255) {
+      setDecimal(num);
+      setBinary(decimalToBinary(num));
+      setHex(decimalToHex(num));
+    }
+  };
+
+  const updateFromBinary = (bin: string) => {
+    if (/^[01]+$/.test(bin) && bin.length <= 8) {
+      setBinary(bin);
+      const dec = binaryToDecimal(bin);
+      setDecimal(dec);
+      setHex(decimalToHex(dec));
+    }
+  };
+
+  const updateFromHex = (hexValue: string) => {
+    if (/^[0-9A-Fa-f]+$/.test(hexValue) && hexValue.length <= 2) {
+      setHex(hexValue.toUpperCase());
+      const dec = hexToDecimal(hexValue);
+      setDecimal(dec);
+      setBinary(decimalToBinary(dec));
+    }
+  };
+
+  return (
+    <div className="p-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Binary Practice</h2>
+        <p className="text-gray-600 text-lg">Master number system conversions</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        {/* Decimal */}
+        <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+          <h3 className="text-xl font-bold text-blue-800 mb-4">Decimal (Base 10)</h3>
+          <input
+            type="number"
+            min="0"
+            max="255"
+            value={decimal}
+            onChange={(e) => updateFromDecimal(parseInt(e.target.value) || 0)}
+            className="w-full p-3 border border-blue-300 rounded-lg text-2xl font-mono text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="mt-4 text-center">
+            <div className="text-sm text-blue-600 font-medium">Range: 0-255</div>
+            <div className="text-sm text-blue-600">Uses digits: 0-9</div>
+          </div>
+        </div>
+
+        {/* Binary */}
+        <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+          <h3 className="text-xl font-bold text-green-800 mb-4">Binary (Base 2)</h3>
+          <input
+            type="text"
+            value={binary}
+            onChange={(e) => updateFromBinary(e.target.value)}
+            className="w-full p-3 border border-green-300 rounded-lg text-2xl font-mono text-center focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="10101010"
+          />
+          <div className="mt-4 text-center">
+            <div className="text-sm text-green-600 font-medium">8 bits max</div>
+            <div className="text-sm text-green-600">Uses digits: 0, 1</div>
+          </div>
+        </div>
+
+        {/* Hexadecimal */}
+        <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+          <h3 className="text-xl font-bold text-purple-800 mb-4">Hexadecimal (Base 16)</h3>
+          <input
+            type="text"
+            value={hex}
+            onChange={(e) => updateFromHex(e.target.value)}
+            className="w-full p-3 border border-purple-300 rounded-lg text-2xl font-mono text-center focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="FF"
+          />
+          <div className="mt-4 text-center">
+            <div className="text-sm text-purple-600 font-medium">2 digits max</div>
+            <div className="text-sm text-purple-600">Uses: 0-9, A-F</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Binary Breakdown */}
+      <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8">
+        <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Binary Breakdown</h3>
+        <div className="grid grid-cols-8 gap-2">
+          {Array.from({ length: 8 }, (_, i) => {
+            const power = 7 - i;
+            const value = Math.pow(2, power);
+            const bit = binary.padStart(8, '0')[i] || '0';
+            return (
+              <div key={i} className="text-center">
+                <div className="bg-white rounded-lg p-3 border-2 border-gray-300 mb-2">
+                  <div className="text-sm text-gray-600">2^{power}</div>
+                  <div className="text-lg font-bold text-gray-800">{value}</div>
+                  <div className="text-2xl font-bold text-blue-600">{bit}</div>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {bit === '1' ? value : 0}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="text-center mt-4">
+          <div className="text-lg text-gray-700">
+            Sum: {binary.padStart(8, '0').split('').map((bit, i) => 
+              bit === '1' ? Math.pow(2, 7 - i) : 0
+            ).filter(val => val > 0).join(' + ')} = {decimal}
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Information Section */}
+      <div className="bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 rounded-2xl p-8 border border-green-200">
+        <div className="text-center mb-8">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            🔢 Number Systems in Computing
+          </h3>
+          <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+            Different number systems are fundamental to computer science. Binary is the language of computers, 
+            while hexadecimal provides a compact way to represent binary data.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-blue-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <span className="text-white font-bold text-xl">10</span>
+              </div>
+              <h4 className="text-2xl font-bold text-blue-800">Decimal System</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Base:</strong> 10 (ten digits: 0-9)</p>
+              <p><strong>Human-Friendly:</strong> Natural counting system</p>
+              <p><strong>Place Values:</strong> Powers of 10</p>
+              <p><strong>Example:</strong> 123 = 1×10² + 2×10¹ + 3×10⁰</p>
+              <p><strong>Usage:</strong> Everyday mathematics</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-green-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <span className="text-white font-bold text-xl">2</span>
+              </div>
+              <h4 className="text-2xl font-bold text-green-800">Binary System</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Base:</strong> 2 (two digits: 0, 1)</p>
+              <p><strong>Computer Language:</strong> On/Off, True/False</p>
+              <p><strong>Place Values:</strong> Powers of 2</p>
+              <p><strong>Example:</strong> 101 = 1×2² + 0×2¹ + 1×2⁰ = 5</p>
+              <p><strong>Usage:</strong> All digital systems</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <span className="text-white font-bold text-xl">16</span>
+              </div>
+              <h4 className="text-2xl font-bold text-purple-800">Hexadecimal</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Base:</strong> 16 (digits: 0-9, A-F)</p>
+              <p><strong>Compact:</strong> Represents 4 binary digits</p>
+              <p><strong>Place Values:</strong> Powers of 16</p>
+              <p><strong>Example:</strong> 2A = 2×16¹ + 10×16⁰ = 42</p>
+              <p><strong>Usage:</strong> Memory addresses, colors</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 text-center">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 max-w-4xl mx-auto">
+            <h4 className="text-2xl font-bold text-gray-800 mb-4">💡 APCSP Key Concepts</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg text-gray-700">
+              <div className="text-left space-y-2">
+                <p><strong>Bit:</strong> Single binary digit (0 or 1)</p>
+                <p><strong>Byte:</strong> 8 bits (can represent 0-255)</p>
+                <p><strong>Overflow:</strong> When numbers exceed storage capacity</p>
+              </div>
+              <div className="text-left space-y-2">
+                <p><strong>ASCII:</strong> Text encoding using 7-8 bits per character</p>
+                <p><strong>RGB Colors:</strong> Each channel uses 8 bits (0-255)</p>
+                <p><strong>IP Addresses:</strong> Four 8-bit numbers (IPv4)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Logic Gate Simulator Component
+const LogicGateSimulator: React.FC = () => {
+  const [inputA, setInputA] = useState(false);
+  const [inputB, setInputB] = useState(false);
+  const [selectedGate, setSelectedGate] = useState('AND');
+
+  const gates = {
+    AND: (a: boolean, b: boolean) => a && b,
+    OR: (a: boolean, b: boolean) => a || b,
+    NOT: (a: boolean) => !a,
+    NAND: (a: boolean, b: boolean) => !(a && b),
+    NOR: (a: boolean, b: boolean) => !(a || b),
+    XOR: (a: boolean, b: boolean) => a !== b,
+    XNOR: (a: boolean, b: boolean) => a === b
+  };
+
+  const getOutput = () => {
+    if (selectedGate === 'NOT') {
+      return gates[selectedGate](inputA);
+    }
+    return gates[selectedGate as keyof typeof gates](inputA, inputB);
+  };
+
+  const truthTable = () => {
+    if (selectedGate === 'NOT') {
+      return [
+        { a: false, output: gates.NOT(false) },
+        { a: true, output: gates.NOT(true) }
+      ];
+    }
+    
+    return [
+      { a: false, b: false, output: gates[selectedGate as keyof typeof gates](false, false) },
+      { a: false, b: true, output: gates[selectedGate as keyof typeof gates](false, true) },
+      { a: true, b: false, output: gates[selectedGate as keyof typeof gates](true, false) },
+      { a: true, b: true, output: gates[selectedGate as keyof typeof gates](true, true) }
+    ];
+  };
+
+  return (
+    <div className="p-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Logic Gate Simulator</h2>
+        <p className="text-gray-600 text-lg">Explore digital logic gates and Boolean operations</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Simulator */}
+        <div className="space-y-6">
+          {/* Gate Selection */}
+          <div className="bg-orange-50 rounded-xl p-6 border border-orange-200">
+            <h3 className="text-xl font-bold text-orange-800 mb-4">Select Logic Gate</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {Object.keys(gates).map((gate) => (
+                <button
+                  key={gate}
+                  onClick={() => setSelectedGate(gate)}
+                  className={`p-3 rounded-lg border-2 transition-all duration-300 font-medium ${
+                    selectedGate === gate
+                      ? 'border-orange-500 bg-orange-100 text-orange-800'
+                      : 'border-gray-300 hover:border-orange-300 hover:bg-orange-50'
+                  }`}
+                >
+                  {gate}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Inputs */}
+          <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+            <h3 className="text-xl font-bold text-blue-800 mb-4">Inputs</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-medium">Input A:</span>
+                <button
+                  onClick={() => setInputA(!inputA)}
+                  className={`w-16 h-8 rounded-full transition-all duration-300 ${
+                    inputA ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <div className={`w-6 h-6 bg-white rounded-full transition-transform duration-300 ${
+                    inputA ? 'translate-x-8' : 'translate-x-1'
+                  }`}></div>
+                </button>
+                <span className={`text-lg font-bold ${inputA ? 'text-green-600' : 'text-red-600'}`}>
+                  {inputA ? '1' : '0'}
+                </span>
+              </div>
+              
+              {selectedGate !== 'NOT' && (
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-medium">Input B:</span>
+                  <button
+                    onClick={() => setInputB(!inputB)}
+                    className={`w-16 h-8 rounded-full transition-all duration-300 ${
+                      inputB ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 bg-white rounded-full transition-transform duration-300 ${
+                      inputB ? 'translate-x-8' : 'translate-x-1'
+                    }`}></div>
+                  </button>
+                  <span className={`text-lg font-bold ${inputB ? 'text-green-600' : 'text-red-600'}`}>
+                    {inputB ? '1' : '0'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Output */}
+          <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+            <h3 className="text-xl font-bold text-green-800 mb-4">Output</h3>
+            <div className="text-center">
+              <div className={`w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl font-bold text-white transition-all duration-300 ${
+                getOutput() ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+              }`}>
+                {getOutput() ? '1' : '0'}
+              </div>
+              <div className="text-lg font-medium text-gray-700">
+                {selectedGate} Gate Output: <span className={`font-bold ${getOutput() ? 'text-green-600' : 'text-red-600'}`}>
+                  {getOutput() ? 'TRUE' : 'FALSE'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Truth Table */}
+        <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+          <h3 className="text-xl font-bold text-purple-800 mb-4">Truth Table - {selectedGate} Gate</h3>
+          <div className="overflow-hidden rounded-lg border border-purple-300">
+            <table className="w-full">
+              <thead className="bg-purple-200">
+                <tr>
+                  <th className="p-3 text-left font-bold text-purple-800">A</th>
+                  {selectedGate !== 'NOT' && <th className="p-3 text-left font-bold text-purple-800">B</th>}
+                  <th className="p-3 text-left font-bold text-purple-800">Output</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {truthTable().map((row, index) => (
+                  <tr key={index} className="border-t border-purple-200">
+                    <td className="p-3 font-mono text-lg">{row.a ? '1' : '0'}</td>
+                    {selectedGate !== 'NOT' && <td className="p-3 font-mono text-lg">{(row as any).b ? '1' : '0'}</td>}
+                    <td className={`p-3 font-mono text-lg font-bold ${row.output ? 'text-green-600' : 'text-red-600'}`}>
+                      {row.output ? '1' : '0'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Information Section */}
+      <div className="mt-12 bg-gradient-to-r from-orange-50 via-red-50 to-pink-50 rounded-2xl p-8 border border-orange-200">
+        <div className="text-center mb-8">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-4">
+            ⚡ Digital Logic & Boolean Algebra
+          </h3>
+          <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+            Logic gates are the fundamental building blocks of digital circuits. They perform Boolean operations 
+            that form the basis of all computer processing and decision-making.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-blue-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">AND</span>
+              </div>
+              <h4 className="text-2xl font-bold text-blue-800">Basic Gates</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>AND:</strong> Output true only if both inputs are true</p>
+              <p><strong>OR:</strong> Output true if at least one input is true</p>
+              <p><strong>NOT:</strong> Output opposite of input (inverter)</p>
+              <p><strong>Foundation:</strong> All other gates built from these</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">NAND</span>
+              </div>
+              <h4 className="text-2xl font-bold text-purple-800">Compound Gates</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>NAND:</strong> NOT AND (opposite of AND)</p>
+              <p><strong>NOR:</strong> NOT OR (opposite of OR)</p>
+              <p><strong>XOR:</strong> Exclusive OR (different inputs)</p>
+              <p><strong>Universal:</strong> NAND can create any logic function</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-green-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Cpu className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-green-800">Applications</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Processors:</strong> CPU arithmetic and logic units</p>
+              <p><strong>Memory:</strong> Storage and retrieval systems</p>
+              <p><strong>Control:</strong> Decision-making circuits</p>
+              <p><strong>Programming:</strong> Boolean expressions in code</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 max-w-4xl mx-auto">
+            <h4 className="text-2xl font-bold text-gray-800 mb-4">🔗 Boolean Algebra Laws</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg text-gray-700">
+              <div className="text-left space-y-2">
+                <p><strong>Identity:</strong> A AND 1 = A, A OR 0 = A</p>
+                <p><strong>Null:</strong> A AND 0 = 0, A OR 1 = 1</p>
+                <p><strong>Idempotent:</strong> A AND A = A, A OR A = A</p>
+              </div>
+              <div className="text-left space-y-2">
+                <p><strong>Complement:</strong> A AND NOT A = 0</p>
+                <p><strong>De Morgan's:</strong> NOT(A AND B) = NOT A OR NOT B</p>
+                <p><strong>Distributive:</strong> A AND (B OR C) = (A AND B) OR (A AND C)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Citation */}
+        <div className="mt-8 text-center">
+          <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-700 mb-2">
+              <strong>Reference:</strong> Truth Tables and Logic Gates
+            </p>
+            <a
+              href="http://trashworldnews.com/files/digital_logic_design.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center space-x-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span>Digital Logic Design PDF</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Cybersecurity Scenarios Component
+const CybersecurityScenarios: React.FC = () => {
+  const [selectedScenario, setSelectedScenario] = useState(0);
+
+  const scenarios = [
+    {
+      title: "Phishing Email Detection",
+      description: "Learn to identify suspicious emails and protect your personal information",
+      content: "You receive an email claiming to be from your bank asking you to verify your account information by clicking a link.",
+      question: "What should you do?",
+      options: [
+        "Click the link immediately to verify your account",
+        "Reply with your account information",
+        "Contact your bank directly using their official phone number",
+        "Forward the email to friends to warn them"
+      ],
+      correct: 2,
+      explanation: "Always contact your bank directly using official contact information. Legitimate banks never ask for sensitive information via email."
+    },
+    {
+      title: "Password Security",
+      description: "Understand the importance of strong, unique passwords",
+      content: "You need to create a password for a new online account. You want something you can remember easily.",
+      question: "Which password is the most secure?",
+      options: [
+        "password123",
+        "MyDog'sName2023!",
+        "Tr0ub4dor&3",
+        "123456789"
+      ],
+      correct: 2,
+      explanation: "Strong passwords use a mix of uppercase, lowercase, numbers, and symbols. Avoid personal information and common patterns."
+    },
+    {
+      title: "Social Engineering",
+      description: "Recognize manipulation tactics used by cybercriminals",
+      content: "Someone calls claiming to be from IT support, saying they need your password to fix a security issue on your computer.",
+      question: "How should you respond?",
+      options: [
+        "Give them your password since they're from IT",
+        "Ask for their employee ID and verify with your IT department",
+        "Hang up and ignore the call",
+        "Give them a fake password to test them"
+      ],
+      correct: 1,
+      explanation: "Always verify the identity of anyone requesting sensitive information. Legitimate IT staff have other ways to access systems."
+    }
   ];
 
-  const pythonResources = [
+  const currentScenario = scenarios[selectedScenario];
+
+  return (
+    <div className="p-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Cybersecurity Scenarios</h2>
+        <p className="text-gray-600 text-lg">Learn to identify and respond to digital security threats</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Scenario Selection */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Security Scenarios</h3>
+          {scenarios.map((scenario, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedScenario(index)}
+              className={`w-full p-4 rounded-xl border-2 transition-all duration-300 text-left ${
+                selectedScenario === index
+                  ? 'border-teal-500 bg-teal-50 shadow-lg'
+                  : 'border-gray-200 hover:border-teal-300 hover:bg-teal-50'
+              }`}
+            >
+              <h4 className={`font-bold mb-2 ${selectedScenario === index ? 'text-teal-800' : 'text-gray-900'}`}>
+                {scenario.title}
+              </h4>
+              <p className={`text-sm ${selectedScenario === index ? 'text-teal-700' : 'text-gray-600'}`}>
+                {scenario.description}
+              </p>
+            </button>
+          ))}
+        </div>
+
+        {/* Scenario Content */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-teal-50 rounded-xl p-6 border border-teal-200">
+            <h3 className="text-2xl font-bold text-teal-800 mb-4">{currentScenario.title}</h3>
+            <div className="bg-white rounded-lg p-4 border border-teal-200 mb-4">
+              <p className="text-lg text-gray-800 leading-relaxed">{currentScenario.content}</p>
+            </div>
+            <h4 className="text-xl font-bold text-teal-800 mb-4">{currentScenario.question}</h4>
+            <div className="space-y-3">
+              {currentScenario.options.map((option, index) => (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg border-2 transition-all duration-300 ${
+                    index === currentScenario.correct
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-bold ${
+                      index === currentScenario.correct
+                        ? 'border-green-500 bg-green-500 text-white'
+                        : 'border-gray-400 text-gray-600'
+                    }`}>
+                      {String.fromCharCode(65 + index)}
+                    </div>
+                    <span className="text-lg">{option}</span>
+                    {index === currentScenario.correct && (
+                      <CheckCircle className="h-6 w-6 text-green-600 ml-auto" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <h5 className="font-bold text-blue-800 mb-2">Explanation:</h5>
+              <p className="text-blue-700 leading-relaxed">{currentScenario.explanation}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Security Guide */}
+      <div className="mt-12 bg-gradient-to-r from-teal-50 via-cyan-50 to-blue-50 rounded-2xl p-8 border border-teal-200">
+        <div className="text-center mb-8">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent mb-4">
+            🛡️ Comprehensive Security Guide
+          </h3>
+          <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+            Cybersecurity is everyone's responsibility. Understanding common threats and best practices 
+            helps protect your digital life and sensitive information.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-red-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-red-800">Common Threats</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Phishing:</strong> Fake emails/websites stealing credentials</p>
+              <p><strong>Malware:</strong> Viruses, ransomware, spyware</p>
+              <p><strong>Social Engineering:</strong> Psychological manipulation</p>
+              <p><strong>Data Breaches:</strong> Unauthorized access to databases</p>
+              <p><strong>Identity Theft:</strong> Stealing personal information</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-green-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Key className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-green-800">Password Security</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Length:</strong> At least 12 characters long</p>
+              <p><strong>Complexity:</strong> Mix of letters, numbers, symbols</p>
+              <p><strong>Uniqueness:</strong> Different password for each account</p>
+              <p><strong>Manager:</strong> Use password management tools</p>
+              <p><strong>2FA:</strong> Enable two-factor authentication</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-blue-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Globe className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-blue-800">Safe Browsing</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>HTTPS:</strong> Look for secure connection indicators</p>
+              <p><strong>Downloads:</strong> Only from trusted sources</p>
+              <p><strong>Updates:</strong> Keep software and browsers current</p>
+              <p><strong>Pop-ups:</strong> Avoid clicking suspicious ads</p>
+              <p><strong>Public WiFi:</strong> Avoid sensitive activities</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Monitor className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-purple-800">Device Security</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Lock Screens:</strong> Use PINs, passwords, or biometrics</p>
+              <p><strong>Automatic Updates:</strong> Enable security patches</p>
+              <p><strong>Antivirus:</strong> Install reputable security software</p>
+              <p><strong>Backups:</strong> Regular data backups to secure locations</p>
+              <p><strong>Remote Wipe:</strong> Enable for lost/stolen devices</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-orange-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Info className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-orange-800">Privacy Protection</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Social Media:</strong> Review privacy settings regularly</p>
+              <p><strong>Personal Info:</strong> Limit sharing of sensitive data</p>
+              <p><strong>Location Services:</strong> Disable when not needed</p>
+              <p><strong>Cookies:</strong> Understand tracking and data collection</p>
+              <p><strong>VPN:</strong> Use for additional privacy protection</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-teal-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Target className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-2xl font-bold text-teal-800">Incident Response</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Suspicious Activity:</strong> Report to appropriate authorities</p>
+              <p><strong>Compromised Accounts:</strong> Change passwords immediately</p>
+              <p><strong>Malware Detection:</strong> Disconnect and scan systems</p>
+              <p><strong>Data Breach:</strong> Monitor accounts and credit reports</p>
+              <p><strong>Documentation:</strong> Keep records of security incidents</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 max-w-4xl mx-auto">
+            <h4 className="text-2xl font-bold text-gray-800 mb-4">🎯 APCSP Security Concepts</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg text-gray-700">
+              <div className="text-left space-y-2">
+                <p><strong>Authentication:</strong> Verifying user identity</p>
+                <p><strong>Authorization:</strong> Controlling access to resources</p>
+                <p><strong>Encryption:</strong> Protecting data confidentiality</p>
+                <p><strong>Digital Certificates:</strong> Verifying website authenticity</p>
+              </div>
+              <div className="text-left space-y-2">
+                <p><strong>Firewalls:</strong> Network traffic filtering</p>
+                <p><strong>Intrusion Detection:</strong> Monitoring for threats</p>
+                <p><strong>Risk Assessment:</strong> Evaluating security vulnerabilities</p>
+                <p><strong>Security Policies:</strong> Organizational guidelines</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Python Resources Component
+const PythonResources: React.FC = () => {
+  const resources = [
     {
-      name: 'CMU CS Academy',
-      url: 'https://academy.cs.cmu.edu/',
-      description: 'Interactive Python programming course from Carnegie Mellon University',
-      level: 'Beginner to Advanced',
-      icon: '🏛️',
-      features: ['Interactive exercises', 'Immediate feedback', 'Comprehensive curriculum']
+      title: "CodeStepByStep",
+      description: "Interactive Python practice problems with instant feedback",
+      url: "https://codestepbystep.com/problem/list/python",
+      icon: "/src/assets/python-icons/codestep.png",
+      category: "Practice Problems",
+      difficulty: "Beginner to Advanced",
+      features: ["Step-by-step solutions", "Instant feedback", "Progress tracking", "Comprehensive problem set"]
     },
     {
-      name: 'Practice Python',
-      url: 'https://www.practicepython.org/',
-      description: 'Over 40 beginner Python exercises with solutions',
-      level: 'Beginner',
-      icon: '🐍',
-      features: ['Beginner-friendly', 'Detailed solutions', 'Progressive difficulty']
+      title: "CMU CS Academy",
+      description: "Carnegie Mellon's interactive Python course with graphics",
+      url: "https://academy.cs.cmu.edu/",
+      icon: "/src/assets/python-icons/CMU.png",
+      category: "Interactive Course",
+      difficulty: "Beginner Friendly",
+      features: ["Visual programming", "Interactive exercises", "Graphics and animations", "Structured curriculum"]
     },
     {
-      name: 'Exercism',
-      url: 'https://exercism.org/tracks/python',
-      description: 'Code practice and mentorship for Python programming',
-      level: 'Beginner to Advanced',
-      icon: '💪',
-      features: ['Mentor feedback', 'Community discussions', 'Real-world problems']
+      title: "Exercism",
+      description: "Code practice and mentorship platform with Python track",
+      url: "https://exercism.org/tracks/python",
+      icon: "/src/assets/python-icons/EXCERCISM.png",
+      category: "Mentored Practice",
+      difficulty: "All Levels",
+      features: ["Mentor feedback", "Real-world problems", "Community support", "Skill progression"]
     },
     {
-      name: 'CodingBat',
-      url: 'https://codingbat.com/python',
-      description: 'Python coding practice problems with immediate feedback',
-      level: 'Beginner to Intermediate',
-      icon: '🦇',
-      features: ['Instant feedback', 'Progressive exercises', 'Logic building']
-    },
-    {
-      name: 'Python.org Tutorial',
-      url: 'https://docs.python.org/3/tutorial/',
-      description: 'Official Python tutorial covering all language fundamentals',
-      level: 'Beginner to Intermediate',
-      icon: '📚',
-      features: ['Official documentation', 'Comprehensive coverage', 'Best practices']
-    },
-    {
-      name: 'Replit',
-      url: 'https://replit.com/languages/python3',
-      description: 'Online Python IDE for coding practice and projects',
-      level: 'All Levels',
-      icon: '💻',
-      features: ['Online IDE', 'Collaborative coding', 'Instant execution']
+      title: "Python.org",
+      description: "Official Python documentation and tutorials",
+      url: "https://www.python.org/",
+      icon: "/src/assets/python-icons/PYTHON.png",
+      category: "Documentation",
+      difficulty: "Reference",
+      features: ["Official documentation", "Language reference", "Standard library", "Community resources"]
     }
   ];
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
+    <div className="p-8">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
-          Practice Tools
-        </h1>
-        <p className="text-xl text-gray-600">
-          Interactive tools to master computer science concepts
-        </p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Python Resources</h2>
+        <p className="text-gray-600 text-lg">Essential Python programming resources and practice platforms</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap justify-center gap-2 mb-8">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
-                activeTab === tab.id
-                  ? `bg-gradient-to-r ${tab.color} text-white shadow-lg`
-                  : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-              }`}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        {resources.map((resource, index) => (
+          <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="flex items-start space-x-4 mb-4">
+              <img 
+                src={resource.icon} 
+                alt={resource.title}
+                className="w-16 h-16 rounded-lg object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/src/assets/python-icons/image.png';
+                }}
+              />
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{resource.title}</h3>
+                <p className="text-gray-600 mb-2">{resource.description}</p>
+                <div className="flex items-center space-x-4 text-sm">
+                  <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
+                    {resource.category}
+                  </span>
+                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                    {resource.difficulty}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <h4 className="font-bold text-gray-800 mb-2">Features:</h4>
+              <ul className="space-y-1">
+                {resource.features.map((feature, featureIndex) => (
+                  <li key={featureIndex} className="flex items-center space-x-2 text-gray-700">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <a
+              href={resource.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
             >
-              <Icon className="h-5 w-5" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+              <ExternalLink className="h-5 w-5" />
+              <span>Visit {resource.title}</span>
+            </a>
+          </div>
+        ))}
       </div>
 
-      {/* RGB Colors Tool */}
-      {activeTab === 'rgb' && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-pink-500 to-rose-600 p-6 text-white">
-            <div className="flex items-center space-x-3">
-              <Palette className="h-8 w-8" />
-              <div>
-                <h2 className="text-2xl font-bold">RGB Color Practice</h2>
-                <p className="text-pink-100">Master RGB to HEX color conversions</p>
+      {/* Enhanced Information Section */}
+      <div className="bg-gradient-to-r from-yellow-50 via-orange-50 to-red-50 rounded-2xl p-8 border border-yellow-200">
+        <div className="text-center mb-8">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-4">
+            🐍 Python Programming Mastery
+          </h3>
+          <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+            Python is one of the most popular programming languages for beginners and professionals alike. 
+            Its simple syntax and powerful capabilities make it perfect for learning programming concepts.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-blue-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Code className="h-8 w-8 text-white" />
               </div>
+              <h4 className="text-2xl font-bold text-blue-800">Core Concepts</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Variables & Data Types:</strong> Strings, integers, floats, booleans</p>
+              <p><strong>Control Structures:</strong> If statements, loops, functions</p>
+              <p><strong>Data Structures:</strong> Lists, dictionaries, tuples, sets</p>
+              <p><strong>Object-Oriented:</strong> Classes, objects, inheritance</p>
+              <p><strong>Error Handling:</strong> Try/except blocks, debugging</p>
             </div>
           </div>
 
-          <div className="p-6">
-            {/* Mode Toggle */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-gray-100 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setRgbMode('practice')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    rgbMode === 'practice'
-                      ? 'bg-pink-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Practice Quiz
-                </button>
-                <button
-                  onClick={() => setRgbMode('converter')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    rgbMode === 'converter'
-                      ? 'bg-pink-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Color Converter
-                </button>
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-green-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Target className="h-8 w-8 text-white" />
               </div>
+              <h4 className="text-2xl font-bold text-green-800">APCSP Applications</h4>
             </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Algorithms:</strong> Sorting, searching, recursion</p>
+              <p><strong>Data Analysis:</strong> Processing and visualizing data</p>
+              <p><strong>Simulations:</strong> Modeling real-world scenarios</p>
+              <p><strong>Web Development:</strong> Creating interactive websites</p>
+              <p><strong>Problem Solving:</strong> Breaking down complex problems</p>
+            </div>
+          </div>
 
-            {rgbMode === 'practice' ? (
-              <div className="space-y-6">
-                {/* Score */}
-                <div className="flex justify-center space-x-8">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-pink-600">{rgbScore}</div>
-                    <div className="text-sm text-gray-600">Correct</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-600">{rgbTotal}</div>
-                    <div className="text-sm text-gray-600">Total</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {rgbTotal > 0 ? Math.round((rgbScore / rgbTotal) * 100) : 0}%
-                    </div>
-                    <div className="text-sm text-gray-600">Accuracy</div>
-                  </div>
-                </div>
-
-                {/* Question */}
-                <div className="text-center">
-                  <div className="mb-4">
-                    <div
-                      className="w-32 h-32 mx-auto rounded-xl shadow-lg border-4 border-white"
-                      style={{ backgroundColor: `rgb(${rgbQuestion.r}, ${rgbQuestion.g}, ${rgbQuestion.b})` }}
-                    ></div>
-                  </div>
-                  <p className="text-lg font-medium text-gray-900 mb-2">
-                    Convert RGB({rgbQuestion.r}, {rgbQuestion.g}, {rgbQuestion.b}) to HEX:
-                  </p>
-                  <input
-                    type="text"
-                    value={rgbAnswer}
-                    onChange={(e) => setRgbAnswer(e.target.value)}
-                    placeholder="#RRGGBB"
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-center font-mono text-lg"
-                    disabled={rgbShowResult}
-                  />
-                </div>
-
-                {/* Result */}
-                {rgbShowResult && (
-                  <div className={`p-4 rounded-lg ${rgbCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                    <div className="flex items-center justify-center space-x-2 mb-2">
-                      {rgbCorrect ? (
-                        <CheckCircle className="h-6 w-6 text-green-600" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-red-600" />
-                      )}
-                      <span className={`font-medium ${rgbCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                        {rgbCorrect ? 'Correct!' : 'Incorrect'}
-                      </span>
-                    </div>
-                    {!rgbCorrect && (
-                      <p className="text-center text-red-700">
-                        The correct answer is: {rgbToHex(rgbQuestion.r, rgbQuestion.g, rgbQuestion.b)}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex justify-center space-x-4">
-                  {!rgbShowResult ? (
-                    <button
-                      onClick={handleRgbAnswer}
-                      disabled={!rgbAnswer}
-                      className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Submit Answer
-                    </button>
-                  ) : (
-                    <button
-                      onClick={generateRgbQuestion}
-                      className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg font-medium"
-                    >
-                      Next Question
-                    </button>
-                  )}
-                  <button
-                    onClick={generateRgbQuestion}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2 inline" />
-                    New Question
-                  </button>
-                </div>
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-200">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Award className="h-8 w-8 text-white" />
               </div>
-            ) : (
-              <div className="space-y-6">
-                {/* RGB Sliders */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Red: {rgbR}</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="255"
-                      value={rgbR}
-                      onChange={(e) => setRgbR(parseInt(e.target.value))}
-                      className="w-full h-2 bg-red-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Green: {rgbG}</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="255"
-                      value={rgbG}
-                      onChange={(e) => setRgbG(parseInt(e.target.value))}
-                      className="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Blue: {rgbB}</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="255"
-                      value={rgbB}
-                      onChange={(e) => setRgbB(parseInt(e.target.value))}
-                      className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                  </div>
-                </div>
-
-                {/* Color Preview */}
-                <div className="text-center">
-                  <div
-                    className="w-48 h-48 mx-auto rounded-xl shadow-lg border-4 border-white"
-                    style={{ backgroundColor: `rgb(${rgbR}, ${rgbG}, ${rgbB})` }}
-                  ></div>
-                  <div className="mt-4 space-y-2">
-                    <p className="text-lg font-mono">RGB({rgbR}, {rgbG}, {rgbB})</p>
-                    <p className="text-lg font-mono">{rgbToHex(rgbR, rgbG, rgbB)}</p>
-                  </div>
-                </div>
-
-                {/* HEX Input */}
-                <div className="text-center">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Or enter HEX color:</label>
-                  <input
-                    type="text"
-                    value={hexInput}
-                    onChange={(e) => {
-                      setHexInput(e.target.value);
-                      const rgb = hexToRgb(e.target.value);
-                      if (rgb) {
-                        setRgbR(rgb.r);
-                        setRgbG(rgb.g);
-                        setRgbB(rgb.b);
-                      }
-                    }}
-                    placeholder="#RRGGBB"
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-center font-mono"
-                  />
-                </div>
-
-                {/* Quick Facts */}
-                <div className="bg-pink-50 rounded-lg p-4">
-                  <h3 className="font-bold text-pink-900 mb-2 flex items-center">
-                    <Lightbulb className="h-5 w-5 mr-2" />
-                    RGB Color Facts
-                  </h3>
-                  <ul className="text-sm text-pink-800 space-y-1">
-                    <li>• RGB stands for Red, Green, Blue</li>
-                    <li>• Each color channel ranges from 0-255 (8 bits)</li>
-                    <li>• RGB(0,0,0) is black, RGB(255,255,255) is white</li>
-                    <li>• HEX colors use base-16 notation (0-9, A-F)</li>
-                  </ul>
-                </div>
-              </div>
-            )}
+              <h4 className="text-2xl font-bold text-purple-800">Best Practices</h4>
+            </div>
+            <div className="space-y-3 text-lg text-gray-700">
+              <p><strong>Code Style:</strong> Follow PEP 8 conventions</p>
+              <p><strong>Documentation:</strong> Write clear comments and docstrings</p>
+              <p><strong>Testing:</strong> Write unit tests for your functions</p>
+              <p><strong>Version Control:</strong> Use Git for project management</p>
+              <p><strong>Libraries:</strong> Leverage existing modules and packages</p>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Binary Numbers Tool */}
-      {activeTab === 'binary' && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 p-6 text-white">
-            <div className="flex items-center space-x-3">
-              <Binary className="h-8 w-8" />
-              <div>
-                <h2 className="text-2xl font-bold">Binary Number Practice</h2>
-                <p className="text-blue-100">Master binary to decimal conversions</p>
+        <div className="mt-8 text-center">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 max-w-4xl mx-auto">
+            <h4 className="text-2xl font-bold text-gray-800 mb-4">💡 Learning Path Recommendations</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg text-gray-700">
+              <div className="text-left space-y-2">
+                <p><strong>Beginners:</strong> Start with CMU CS Academy for visual learning</p>
+                <p><strong>Practice:</strong> Use CodeStepByStep for structured problems</p>
+                <p><strong>Mentorship:</strong> Join Exercism for community feedback</p>
               </div>
-            </div>
-          </div>
-
-          <div className="p-6">
-            {/* Mode Toggle */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-gray-100 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setBinaryMode('practice')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    binaryMode === 'practice'
-                      ? 'bg-blue-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Practice Quiz
-                </button>
-                <button
-                  onClick={() => setBinaryMode('converter')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    binaryMode === 'converter'
-                      ? 'bg-blue-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Number Converter
-                </button>
-              </div>
-            </div>
-
-            {binaryMode === 'practice' ? (
-              <div className="space-y-6">
-                {/* Score */}
-                <div className="flex justify-center space-x-8">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{binaryScore}</div>
-                    <div className="text-sm text-gray-600">Correct</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-600">{binaryTotal}</div>
-                    <div className="text-sm text-gray-600">Total</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-cyan-600">
-                      {binaryTotal > 0 ? Math.round((binaryScore / binaryTotal) * 100) : 0}%
-                    </div>
-                    <div className="text-sm text-gray-600">Accuracy</div>
-                  </div>
-                </div>
-
-                {/* Question */}
-                <div className="text-center">
-                  <p className="text-lg font-medium text-gray-900 mb-4">
-                    {binaryQuestion.type === 'decimal-to-binary' 
-                      ? `Convert decimal ${binaryQuestion.value} to binary:`
-                      : `Convert binary ${binaryQuestion.value.toString(2)} to decimal:`
-                    }
-                  </p>
-                  <input
-                    type="text"
-                    value={binaryAnswer}
-                    onChange={(e) => setBinaryAnswer(e.target.value)}
-                    placeholder={binaryQuestion.type === 'decimal-to-binary' ? 'Binary (e.g., 101010)' : 'Decimal (e.g., 42)'}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-center font-mono text-lg"
-                    disabled={binaryShowResult}
-                  />
-                </div>
-
-                {/* Result */}
-                {binaryShowResult && (
-                  <div className={`p-4 rounded-lg ${binaryCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                    <div className="flex items-center justify-center space-x-2 mb-2">
-                      {binaryCorrect ? (
-                        <CheckCircle className="h-6 w-6 text-green-600" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-red-600" />
-                      )}
-                      <span className={`font-medium ${binaryCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                        {binaryCorrect ? 'Correct!' : 'Incorrect'}
-                      </span>
-                    </div>
-                    {!binaryCorrect && (
-                      <p className="text-center text-red-700">
-                        The correct answer is: {
-                          binaryQuestion.type === 'decimal-to-binary' 
-                            ? binaryQuestion.value.toString(2)
-                            : parseInt(binaryQuestion.value.toString(2), 2).toString()
-                        }
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex justify-center space-x-4">
-                  {!binaryShowResult ? (
-                    <button
-                      onClick={handleBinaryAnswer}
-                      disabled={!binaryAnswer}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Submit Answer
-                    </button>
-                  ) : (
-                    <button
-                      onClick={generateBinaryQuestion}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
-                    >
-                      Next Question
-                    </button>
-                  )}
-                  <button
-                    onClick={generateBinaryQuestion}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2 inline" />
-                    New Question
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Decimal to Binary */}
-                <div className="bg-blue-50 rounded-lg p-6">
-                  <h3 className="font-bold text-blue-900 mb-4">Decimal to Binary</h3>
-                  <div className="flex items-center space-x-4">
-                    <input
-                      type="number"
-                      value={decimalInput}
-                      onChange={(e) => setDecimalInput(parseInt(e.target.value) || 0)}
-                      className="px-4 py-2 border border-gray-300 rounded-lg font-mono"
-                      placeholder="Enter decimal"
-                    />
-                    <ArrowRight className="h-5 w-5 text-blue-600" />
-                    <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg font-mono">
-                      {decimalToBinary(decimalInput)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Binary to Decimal */}
-                <div className="bg-cyan-50 rounded-lg p-6">
-                  <h3 className="font-bold text-cyan-900 mb-4">Binary to Decimal</h3>
-                  <div className="flex items-center space-x-4">
-                    <input
-                      type="text"
-                      value={binaryInput}
-                      onChange={(e) => setBinaryInput(e.target.value.replace(/[^01]/g, ''))}
-                      className="px-4 py-2 border border-gray-300 rounded-lg font-mono"
-                      placeholder="Enter binary"
-                    />
-                    <ArrowRight className="h-5 w-5 text-cyan-600" />
-                    <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg font-mono">
-                      {binaryInput ? binaryToDecimal(binaryInput) : 0}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Powers of 2 Reference */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="font-bold text-gray-900 mb-4 flex items-center">
-                    <BookOpen className="h-5 w-5 mr-2" />
-                    Powers of 2 Reference
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    {[1, 2, 4, 8, 16, 32, 64, 128].map((power, index) => (
-                      <div key={power} className="bg-white p-3 rounded border">
-                        <div className="font-mono text-blue-600">2^{index} = {power}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quick Facts */}
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h3 className="font-bold text-blue-900 mb-2 flex items-center">
-                    <Lightbulb className="h-5 w-5 mr-2" />
-                    Binary Number Facts
-                  </h3>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Binary uses only 0s and 1s (base-2)</li>
-                    <li>• Each position represents a power of 2</li>
-                    <li>• Computers store all data in binary</li>
-                    <li>• 8 bits = 1 byte (can represent 0-255)</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Cryptography Tool */}
-      {activeTab === 'cipher' && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-500 to-violet-600 p-6 text-white">
-            <div className="flex items-center space-x-3">
-              <Shield className="h-8 w-8" />
-              <div>
-                <h2 className="text-2xl font-bold">Cryptography & Ciphers</h2>
-                <p className="text-purple-100">Learn encryption and decryption techniques</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6">
-            {/* Mode Toggle */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-gray-100 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setCipherMode('practice')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    cipherMode === 'practice'
-                      ? 'bg-purple-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Decode Challenge
-                </button>
-                <button
-                  onClick={() => setCipherMode('encoder')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    cipherMode === 'encoder'
-                      ? 'bg-purple-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Cipher Encoder
-                </button>
-              </div>
-            </div>
-
-            {cipherMode === 'practice' ? (
-              <div className="space-y-6">
-                {/* Score */}
-                <div className="flex justify-center space-x-8">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{cipherScore}</div>
-                    <div className="text-sm text-gray-600">Correct</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-600">{cipherTotal}</div>
-                    <div className="text-sm text-gray-600">Total</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-violet-600">
-                      {cipherTotal > 0 ? Math.round((cipherScore / cipherTotal) * 100) : 0}%
-                    </div>
-                    <div className="text-sm text-gray-600">Accuracy</div>
-                  </div>
-                </div>
-
-                {/* Question */}
-                <div className="text-center">
-                  <div className="bg-purple-50 rounded-lg p-6 mb-4">
-                    <p className="text-lg font-medium text-gray-900 mb-2">
-                      Decode this Caesar cipher (shift: {cipherQuestion.shift}):
-                    </p>
-                    <div className="text-2xl font-mono font-bold text-purple-600 bg-white p-4 rounded border">
-                      {cipherQuestion.text}
-                    </div>
-                  </div>
-                  <input
-                    type="text"
-                    value={cipherAnswer}
-                    onChange={(e) => setCipherAnswer(e.target.value)}
-                    placeholder="Enter decoded message"
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-center font-mono text-lg"
-                    disabled={cipherShowResult}
-                  />
-                </div>
-
-                {/* Result */}
-                {cipherShowResult && (
-                  <div className={`p-4 rounded-lg ${cipherCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                    <div className="flex items-center justify-center space-x-2 mb-2">
-                      {cipherCorrect ? (
-                        <CheckCircle className="h-6 w-6 text-green-600" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-red-600" />
-                      )}
-                      <span className={`font-medium ${cipherCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                        {cipherCorrect ? 'Correct!' : 'Incorrect'}
-                      </span>
-                    </div>
-                    {!cipherCorrect && (
-                      <p className="text-center text-red-700">
-                        The correct answer is: {cipherQuestion.original}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex justify-center space-x-4">
-                  {!cipherShowResult ? (
-                    <button
-                      onClick={handleCipherAnswer}
-                      disabled={!cipherAnswer}
-                      className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Submit Answer
-                    </button>
-                  ) : (
-                    <button
-                      onClick={generateCipherQuestion}
-                      className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg font-medium"
-                    >
-                      Next Challenge
-                    </button>
-                  )}
-                  <button
-                    onClick={generateCipherQuestion}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2 inline" />
-                    New Challenge
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Caesar Cipher Encoder */}
-                <div className="bg-purple-50 rounded-lg p-6">
-                  <h3 className="font-bold text-purple-900 mb-4">Caesar Cipher Encoder</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Plain Text:</label>
-                      <input
-                        type="text"
-                        value={plainText}
-                        onChange={(e) => setPlainText(e.target.value.toUpperCase())}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono"
-                        placeholder="Enter text to encrypt"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Shift: {cipherShift}</label>
-                      <input
-                        type="range"
-                        min="1"
-                        max="25"
-                        value={cipherShift}
-                        onChange={(e) => setCipherShift(parseInt(e.target.value))}
-                        className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Encrypted Text:</label>
-                      <div className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg font-mono text-purple-600 font-bold">
-                        {caesarCipher(plainText, cipherShift)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Alphabet Reference */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="font-bold text-gray-900 mb-4">Alphabet Reference</h3>
-                  <div className="grid grid-cols-13 gap-1 text-xs font-mono">
-                    {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter, index) => (
-                      <div key={letter} className="text-center p-2 bg-white rounded border">
-                        <div className="font-bold">{letter}</div>
-                        <div className="text-gray-500">{index}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Crypto Facts */}
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <h3 className="font-bold text-purple-900 mb-2 flex items-center">
-                    <Lightbulb className="h-5 w-5 mr-2" />
-                    Cryptography Facts
-                  </h3>
-                  <ul className="text-sm text-purple-800 space-y-1">
-                    <li>• Caesar cipher shifts each letter by a fixed amount</li>
-                    <li>• Named after Julius Caesar who used it for military messages</li>
-                    <li>• Modern encryption uses much more complex algorithms</li>
-                    <li>• ROT13 is a Caesar cipher with shift of 13</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Logic Gates Tool */}
-      {activeTab === 'logic' && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white">
-            <div className="flex items-center space-x-3">
-              <Zap className="h-8 w-8" />
-              <div>
-                <h2 className="text-2xl font-bold">Logic Gates</h2>
-                <p className="text-green-100">Master Boolean logic and digital circuits</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6">
-            {/* Mode Toggle */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-gray-100 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setLogicMode('practice')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    logicMode === 'practice'
-                      ? 'bg-green-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Logic Quiz
-                </button>
-                <button
-                  onClick={() => setLogicMode('simulator')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    logicMode === 'simulator'
-                      ? 'bg-green-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Gate Simulator
-                </button>
-              </div>
-            </div>
-
-            {logicMode === 'practice' ? (
-              <div className="space-y-6">
-                {/* Score */}
-                <div className="flex justify-center space-x-8">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{logicScore}</div>
-                    <div className="text-sm text-gray-600">Correct</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-600">{logicTotal}</div>
-                    <div className="text-sm text-gray-600">Total</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-emerald-600">
-                      {logicTotal > 0 ? Math.round((logicScore / logicTotal) * 100) : 0}%
-                    </div>
-                    <div className="text-sm text-gray-600">Accuracy</div>
-                  </div>
-                </div>
-
-                {/* Question */}
-                <div className="text-center">
-                  <div className="bg-green-50 rounded-lg p-6 mb-4">
-                    <p className="text-lg font-medium text-gray-900 mb-4">
-                      What is the output of this {logicQuestion.gate} gate?
-                    </p>
-                    <div className="flex items-center justify-center space-x-4">
-                      <div className={`px-4 py-2 rounded font-mono font-bold ${logicQuestion.inputs[0] ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
-                        {logicQuestion.inputs[0] ? 'TRUE' : 'FALSE'}
-                      </div>
-                      <div className="px-4 py-2 bg-gray-200 text-gray-800 font-bold rounded">
-                        {logicQuestion.gate}
-                      </div>
-                      {logicQuestion.gate !== 'NOT' && (
-                        <div className={`px-4 py-2 rounded font-mono font-bold ${logicQuestion.inputs[1] ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
-                          {logicQuestion.inputs[1] ? 'TRUE' : 'FALSE'}
-                        </div>
-                      )}
-                      <ArrowRight className="h-6 w-6 text-gray-600" />
-                      <div className="px-4 py-2 bg-gray-100 text-gray-600 font-bold rounded">
-                        ?
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-center space-x-4">
-                    <button
-                      onClick={() => handleLogicAnswer(true)}
-                      disabled={logicShowResult}
-                      className={`px-8 py-3 rounded-lg font-medium transition-all ${
-                        logicAnswer === true
-                          ? 'bg-green-500 text-white'
-                          : 'bg-green-100 text-green-800 hover:bg-green-200'
-                      } disabled:opacity-50`}
-                    >
-                      TRUE
-                    </button>
-                    <button
-                      onClick={() => handleLogicAnswer(false)}
-                      disabled={logicShowResult}
-                      className={`px-8 py-3 rounded-lg font-medium transition-all ${
-                        logicAnswer === false
-                          ? 'bg-red-500 text-white'
-                          : 'bg-red-100 text-red-800 hover:bg-red-200'
-                      } disabled:opacity-50`}
-                    >
-                      FALSE
-                    </button>
-                  </div>
-                </div>
-
-                {/* Result */}
-                {logicShowResult && (
-                  <div className={`p-4 rounded-lg ${logicCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                    <div className="flex items-center justify-center space-x-2 mb-2">
-                      {logicCorrect ? (
-                        <CheckCircle className="h-6 w-6 text-green-600" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-red-600" />
-                      )}
-                      <span className={`font-medium ${logicCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                        {logicCorrect ? 'Correct!' : 'Incorrect'}
-                      </span>
-                    </div>
-                    {!logicCorrect && (
-                      <p className="text-center text-red-700">
-                        The correct answer is: {logicQuestion.output ? 'TRUE' : 'FALSE'}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex justify-center space-x-4">
-                  {logicShowResult && (
-                    <button
-                      onClick={generateLogicQuestion}
-                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium"
-                    >
-                      Next Question
-                    </button>
-                  )}
-                  <button
-                    onClick={generateLogicQuestion}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2 inline" />
-                    New Question
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Gate Simulator */}
-                <div className="bg-green-50 rounded-lg p-6">
-                  <h3 className="font-bold text-green-900 mb-4">Interactive Gate Simulator</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Gate Type:</label>
-                      <select
-                        value={gateType}
-                        onChange={(e) => setGateType(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="AND">AND</option>
-                        <option value="OR">OR</option>
-                        <option value="NOT">NOT</option>
-                        <option value="NAND">NAND</option>
-                        <option value="NOR">NOR</option>
-                        <option value="XOR">XOR</option>
-                      </select>
-                    </div>
-                    
-                    <div className="flex items-center justify-center space-x-4">
-                      <div className="text-center">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Input 1:</label>
-                        <button
-                          onClick={() => setInput1(!input1)}
-                          className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                            input1 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                          }`}
-                        >
-                          {input1 ? 'TRUE' : 'FALSE'}
-                        </button>
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-gray-800 mb-2">{gateType}</div>
-                        <div className="px-4 py-2 bg-gray-200 rounded-lg">
-                          GATE
-                        </div>
-                      </div>
-                      
-                      {gateType !== 'NOT' && (
-                        <div className="text-center">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Input 2:</label>
-                          <button
-                            onClick={() => setInput2(!input2)}
-                            className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                              input2 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                            }`}
-                          >
-                            {input2 ? 'TRUE' : 'FALSE'}
-                          </button>
-                        </div>
-                      )}
-                      
-                      <ArrowRight className="h-8 w-8 text-gray-600" />
-                      
-                      <div className="text-center">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Output:</label>
-                        <div className={`px-6 py-3 rounded-lg font-medium ${
-                          calculateGateOutput(gateType, input1, input2) ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                        }`}>
-                          {calculateGateOutput(gateType, input1, input2) ? 'TRUE' : 'FALSE'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Truth Tables */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="font-bold text-gray-900 mb-4">Truth Tables Reference</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'].map(gate => (
-                      <div key={gate} className="bg-white p-4 rounded border">
-                        <h4 className="font-bold text-center mb-2">{gate}</h4>
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="border-b">
-                              {gate !== 'NOT' && <th className="p-1">A</th>}
-                              {gate !== 'NOT' && <th className="p-1">B</th>}
-                              {gate === 'NOT' && <th className="p-1">A</th>}
-                              <th className="p-1">Out</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {gate === 'NOT' ? (
-                              <>
-                                <tr><td className="p-1 text-center">0</td><td className="p-1 text-center">1</td></tr>
-                                <tr><td className="p-1 text-center">1</td><td className="p-1 text-center">0</td></tr>
-                              </>
-                            ) : (
-                              <>
-                                <tr><td className="p-1 text-center">0</td><td className="p-1 text-center">0</td><td className="p-1 text-center">{calculateGateOutput(gate, false, false) ? '1' : '0'}</td></tr>
-                                <tr><td className="p-1 text-center">0</td><td className="p-1 text-center">1</td><td className="p-1 text-center">{calculateGateOutput(gate, false, true) ? '1' : '0'}</td></tr>
-                                <tr><td className="p-1 text-center">1</td><td className="p-1 text-center">0</td><td className="p-1 text-center">{calculateGateOutput(gate, true, false) ? '1' : '0'}</td></tr>
-                                <tr><td className="p-1 text-center">1</td><td className="p-1 text-center">1</td><td className="p-1 text-center">{calculateGateOutput(gate, true, true) ? '1' : '0'}</td></tr>
-                              </>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Logic Facts */}
-                <div className="bg-green-50 rounded-lg p-4">
-                  <h3 className="font-bold text-green-900 mb-2 flex items-center">
-                    <Lightbulb className="h-5 w-5 mr-2" />
-                    Boolean Logic Facts
-                  </h3>
-                  <ul className="text-sm text-green-800 space-y-1">
-                    <li>• Logic gates are the building blocks of digital circuits</li>
-                    <li>• AND gate outputs true only when all inputs are true</li>
-                    <li>• OR gate outputs true when at least one input is true</li>
-                    <li>• NOT gate inverts the input (true becomes false)</li>
-                    <li>• NAND and NOR are "universal gates" - can build any circuit</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Cybersecurity Tool */}
-      {activeTab === 'cybersecurity' && (
-        <div className="bg-gray-900 rounded-2xl shadow-xl border border-red-500 overflow-hidden">
-          {/* Terminal-style Header */}
-          <div className="bg-red-600 p-4 text-white">
-            <div className="flex items-center space-x-3">
-              <div className="flex space-x-2">
-                <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-6 w-6 animate-pulse" />
-                <span className="font-mono text-lg font-bold">SECURITY ALERT SYSTEM</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-900 text-green-400 p-6 font-mono">
-            {/* Mode Toggle */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-gray-800 rounded-lg p-1 flex border border-green-500">
-                <button
-                  onClick={() => setCybersecurityMode('practice')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    cybersecurityMode === 'practice'
-                      ? 'bg-red-600 text-white shadow-md'
-                      : 'text-green-400 hover:text-white'
-                  }`}
-                >
-                  THREAT DETECTION
-                </button>
-                <button
-                  onClick={() => setCybersecurityMode('guide')}
-                  className={`px-4 py-2 rounded-md font-medium transition-all ${
-                    cybersecurityMode === 'guide'
-                      ? 'bg-red-600 text-white shadow-md'
-                      : 'text-green-400 hover:text-white'
-                  }`}
-                >
-                  SECURITY GUIDE
-                </button>
-              </div>
-            </div>
-
-            {cybersecurityMode === 'practice' ? (
-              <div className="space-y-6">
-                {/* Terminal Stats */}
-                <div className="bg-gray-800 border border-green-500 rounded p-4">
-                  <div className="text-center text-green-400 mb-2">
-                    === THREAT ANALYSIS DASHBOARD ===
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-green-400">{cybersecurityScore}</div>
-                      <div className="text-xs text-gray-400">THREATS IDENTIFIED</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-yellow-400">{cybersecurityTotal}</div>
-                      <div className="text-xs text-gray-400">TOTAL INCIDENTS</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-red-400">
-                        {cybersecurityTotal > 0 ? Math.round((cybersecurityScore / cybersecurityTotal) * 100) : 0}%
-                      </div>
-                      <div className="text-xs text-gray-400">ACCURACY RATE</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Incident Report */}
-                <div className="bg-gray-800 border border-red-500 rounded p-6">
-                  <div className="text-red-400 text-center mb-4 font-bold">
-                    ⚠️ SECURITY INCIDENT REPORT ⚠️
-                  </div>
-                  <div className="bg-black border border-gray-600 rounded p-4 mb-4">
-                    <div className="text-yellow-400 mb-2">INCIDENT DESCRIPTION:</div>
-                    <div className="text-white leading-relaxed">
-                      {cybersecurityQuestion.scenario}
-                    </div>
-                  </div>
-                  
-                  <div className="text-green-400 mb-3">THREAT CLASSIFICATION:</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {cybersecurityQuestion.options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleCybersecurityAnswer(index)}
-                        disabled={cybersecurityShowResult}
-                        className={`p-3 border rounded transition-all font-medium ${
-                          cybersecurityAnswer === index
-                            ? 'bg-red-600 text-white border-red-400'
-                            : 'bg-gray-700 text-green-400 border-green-500 hover:bg-gray-600'
-                        } disabled:opacity-50`}
-                      >
-                        [{String.fromCharCode(65 + index)}] {option}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Analysis Result */}
-                {cybersecurityShowResult && (
-                  <div className={`border rounded p-4 ${
-                    cybersecurityCorrect 
-                      ? 'bg-green-900 border-green-500' 
-                      : 'bg-red-900 border-red-500'
-                  }`}>
-                    <div className="text-center mb-3">
-                      <div className={`text-xl font-bold ${
-                        cybersecurityCorrect ? 'text-green-400' : 'text-red-400'
-                      }`}>
-                        {cybersecurityCorrect ? '✓ THREAT IDENTIFIED' : '✗ MISCLASSIFICATION'}
-                      </div>
-                    </div>
-                    <div className="bg-black border border-gray-600 rounded p-3">
-                      <div className="text-yellow-400 mb-1">ANALYSIS:</div>
-                      <div className="text-white text-sm">
-                        {cybersecurityQuestion.explanation}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Terminal Actions */}
-                <div className="flex justify-center space-x-4">
-                  {cybersecurityShowResult && (
-                    <button
-                      onClick={generateCybersecurityQuestion}
-                      className="bg-green-600 hover:bg-green-700 text-black px-6 py-2 rounded font-bold transition-all"
-                    >
-                      NEXT INCIDENT
-                    </button>
-                  )}
-                  <button
-                    onClick={generateCybersecurityQuestion}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-black px-6 py-2 rounded font-bold transition-all"
-                  >
-                    NEW SCENARIO
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Security Guide */}
-                <div className="bg-gray-800 border border-blue-500 rounded p-6">
-                  <div className="text-blue-400 text-center mb-4 font-bold">
-                    🛡️ CYBERSECURITY KNOWLEDGE BASE 🛡️
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-black border border-gray-600 rounded p-4">
-                      <div className="text-red-400 font-bold mb-2">COMMON THREATS:</div>
-                      <ul className="text-white text-sm space-y-1">
-                        <li>• PHISHING: Fraudulent emails to steal credentials</li>
-                        <li>• MALWARE: Malicious software that damages systems</li>
-                        <li>• DDoS: Overwhelming servers with traffic</li>
-                        <li>• RANSOMWARE: Encrypts files for money</li>
-                        <li>• SOCIAL ENGINEERING: Manipulating people for info</li>
-                      </ul>
-                    </div>
-
-                    <div className="bg-black border border-gray-600 rounded p-4">
-                      <div className="text-green-400 font-bold mb-2">PROTECTION METHODS:</div>
-                      <ul className="text-white text-sm space-y-1">
-                        <li>• Use strong, unique passwords</li>
-                        <li>• Enable two-factor authentication</li>
-                        <li>• Keep software updated</li>
-                        <li>• Be cautious with email links</li>
-                        <li>• Regular data backups</li>
-                        <li>• Use reputable antivirus software</li>
-                      </ul>
-                    </div>
-
-                    <div className="bg-black border border-gray-600 rounded p-4">
-                      <div className="text-yellow-400 font-bold mb-2">WARNING SIGNS:</div>
-                      <ul className="text-white text-sm space-y-1">
-                        <li>• Unexpected system slowdowns</li>
-                        <li>• Unknown programs running</li>
-                        <li>• Suspicious email attachments</li>
-                        <li>• Requests for personal information</li>
-                        <li>• Pop-up warnings about viruses</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Best Practices */}
-                <div className="bg-gray-800 border border-green-500 rounded p-4">
-                  <div className="text-green-400 font-bold mb-3 text-center">
-                    SECURITY BEST PRACTICES
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="bg-black border border-gray-600 rounded p-3">
-                      <div className="text-blue-400 font-bold mb-2">PASSWORD SECURITY:</div>
-                      <ul className="text-white space-y-1">
-                        <li>• 12+ characters minimum</li>
-                        <li>• Mix of letters, numbers, symbols</li>
-                        <li>• Unique for each account</li>
-                        <li>• Use password managers</li>
-                      </ul>
-                    </div>
-                    <div className="bg-black border border-gray-600 rounded p-3">
-                      <div className="text-purple-400 font-bold mb-2">EMAIL SAFETY:</div>
-                      <ul className="text-white space-y-1">
-                        <li>• Verify sender identity</li>
-                        <li>• Don't click suspicious links</li>
-                        <li>• Check URLs carefully</li>
-                        <li>• Report phishing attempts</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Python Resources */}
-      {activeTab === 'python' && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-yellow-500 to-amber-600 p-6 text-white">
-            <div className="flex items-center space-x-3">
-              <Code className="h-8 w-8" />
-              <div>
-                <h2 className="text-2xl font-bold">Python Learning Resources</h2>
-                <p className="text-yellow-100">Curated platforms for Python programming practice</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6">
-            {/* Learning Path */}
-            <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <Target className="h-6 w-6 mr-2 text-yellow-600" />
-                Recommended Learning Path
-              </h3>
-              <div className="flex items-center justify-center space-x-4 mb-6">
-                <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg font-medium">
-                  Beginner
-                </div>
-                <ArrowRight className="h-5 w-5 text-gray-400" />
-                <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg font-medium">
-                  Intermediate
-                </div>
-                <ArrowRight className="h-5 w-5 text-gray-400" />
-                <div className="bg-red-100 text-red-800 px-4 py-2 rounded-lg font-medium">
-                  Advanced
-                </div>
-              </div>
-            </div>
-
-            {/* Resources Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pythonResources.map((resource, index) => (
-                <div key={index} className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2">
-                  <div className="flex items-start space-x-4 mb-4">
-                    <div className="text-4xl">{resource.icon}</div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900 mb-1">{resource.name}</h3>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        resource.level === 'Beginner' ? 'bg-green-100 text-green-800' :
-                        resource.level === 'Beginner to Intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                        resource.level === 'Beginner to Advanced' ? 'bg-blue-100 text-blue-800' :
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {resource.level}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                    {resource.description}
-                  </p>
-                  
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-900 mb-2 text-sm">Features:</h4>
-                    <ul className="space-y-1">
-                      {resource.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-center space-x-2 text-sm text-gray-600">
-                          <Star className="h-3 w-3 text-yellow-500" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <a
-                    href={resource.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center space-x-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105"
-                  >
-                    <span>Visit Platform</span>
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </div>
-              ))}
-            </div>
-
-            {/* Pro Tips */}
-            <div className="mt-8 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl p-6 border border-yellow-200">
-              <h3 className="font-bold text-yellow-900 mb-4 flex items-center">
-                <Trophy className="h-6 w-6 mr-2" />
-                Pro Tips for Learning Python
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ul className="space-y-2 text-sm text-yellow-800">
-                  <li className="flex items-start space-x-2">
-                    <Sparkles className="h-4 w-4 mt-0.5 text-yellow-600" />
-                    <span>Start with basic syntax and gradually build complexity</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Sparkles className="h-4 w-4 mt-0.5 text-yellow-600" />
-                    <span>Practice coding every day, even if just for 15 minutes</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Sparkles className="h-4 w-4 mt-0.5 text-yellow-600" />
-                    <span>Work on real projects to apply what you learn</span>
-                  </li>
-                </ul>
-                <ul className="space-y-2 text-sm text-yellow-800">
-                  <li className="flex items-start space-x-2">
-                    <Sparkles className="h-4 w-4 mt-0.5 text-yellow-600" />
-                    <span>Join Python communities and forums for help</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Sparkles className="h-4 w-4 mt-0.5 text-yellow-600" />
-                    <span>Read other people's code to learn different approaches</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Sparkles className="h-4 w-4 mt-0.5 text-yellow-600" />
-                    <span>Don't be afraid to make mistakes - they're part of learning!</span>
-                  </li>
-                </ul>
+              <div className="text-left space-y-2">
+                <p><strong>Reference:</strong> Keep Python.org documentation handy</p>
+                <p><strong>Projects:</strong> Build real applications to apply concepts</p>
+                <p><strong>Community:</strong> Participate in Python forums and groups</p>
               </div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Initialize questions on component mount */}
-      {React.useEffect(() => {
-        generateRgbQuestion();
-        generateBinaryQuestion();
-        generateCipherQuestion();
-        generateLogicQuestion();
-        generateCybersecurityQuestion();
-      }, [])}
+      </div>
     </div>
   );
 };
