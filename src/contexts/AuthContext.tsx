@@ -60,7 +60,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  useEffect(() => {
+  useEffect(()=> {
     if (isSupabaseConfigured) {
       // Check for authenticated user
       supabase.auth.getUser().then(({ data: { user: authUser } }) => {
@@ -83,7 +83,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fallback to localStorage when Supabase is not configured
       const storedUser = localStorage.getItem('apcsp_user');
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        try {
+          const userData = JSON.parse(storedUser);
+          // Ensure all required fields exist with defaults
+          const completeUser = {
+            ...userData,
+            progress: userData.progress || {
+              unitsCompleted: 0,
+              codingProblems: 0,
+              flashcardsMastered: 0,
+              robotChallenges: 0
+            },
+            achievements: userData.achievements || [],
+            reviewCards: userData.reviewCards || [],
+            profile: {
+              studyStreak: 0,
+              totalStudyTime: 0,
+              practiceToolsUsed: [],
+              savedCredentials: {},
+              ...userData.profile
+            },
+            history: userData.history || []
+          };
+          setUser(completeUser);
+        } catch (error) {
+          console.error('Error parsing stored user data:', error);
+          localStorage.removeItem('apcsp_user');
+        }
       }
     }
   }, []);
@@ -104,9 +130,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
-        // Ensure profile structure exists
-        const userData = {
-          ...data,
+        // Transform Supabase data to match our User interface
+        const userData: User = {
+          id: data.id,
+          email: data.email,
+          name: data.name,
+          progress: data.progress || {
+            unitsCompleted: 0,
+            codingProblems: 0,
+            flashcardsMastered: 0,
+            robotChallenges: 0
+          },
+          achievements: data.achievements || [],
+          joinDate: data.join_date,
+          reviewCards: data.review_cards || [],
           profile: data.profile || {
             studyStreak: 0,
             totalStudyTime: 0,
@@ -117,7 +154,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser(userData);
       } else {
-        // No profile found, user might need to complete signup
         console.log('No profile found for user:', userId);
       }
     } catch (error) {
@@ -127,19 +163,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<boolean> => {
     if (isSupabaseConfigured) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      if (error) {
-        console.error('Login error:', error.message);
+        if (error) {
+          console.error('Login error:', error.message);
+          return false;
+        }
+
+        if (data.user) {
+          await fetchUserProfile(data.user.id);
+          return true;
+        }
+      } catch (error) {
+        console.error('Login error:', error);
         return false;
-      }
-
-      if (data.user) {
-        await fetchUserProfile(data.user.id);
-        return true;
       }
     } else {
       // Fallback to localStorage
@@ -149,19 +190,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const existingUser = users.find((u: any) => u.email === email && u.password === password);
       
       if (existingUser) {
-        const userData = {
+        const userData: User = {
           id: existingUser.id,
           email: existingUser.email,
           name: existingUser.name,
-          progress: existingUser.progress,
-          achievements: existingUser.achievements,
+          progress: existingUser.progress || {
+            unitsCompleted: 0,
+            codingProblems: 0,
+            flashcardsMastered: 0,
+            robotChallenges: 0
+          },
+          achievements: existingUser.achievements || [],
           joinDate: existingUser.joinDate,
           reviewCards: existingUser.reviewCards || [],
-          profile: existingUser.profile || {
+          profile: {
             studyStreak: 0,
             totalStudyTime: 0,
             practiceToolsUsed: [],
-            savedCredentials: {}
+            savedCredentials: {},
+            ...existingUser.profile
           },
           history: existingUser.history || []
         };
@@ -176,48 +223,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (email: string, password: string, name: string): Promise<boolean> => {
     if (isSupabaseConfigured) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error('Signup error:', error.message);
-        return false;
-      }
-
-      if (data.user) {
-        // Create user profile
-        const profile = {
-          id: data.user.id,
+      try {
+        const { data, error } = await supabase.auth.signUp({
           email,
-          name,
-          progress: {
-            unitsCompleted: 0,
-            codingProblems: 0,
-            flashcardsMastered: 0,
-            robotChallenges: 0
-          },
-          achievements: [],
-          joinDate: new Date().toISOString(),
-          reviewCards: [],
-          profile: {
-            studyStreak: 0,
-            totalStudyTime: 0,
-            practiceToolsUsed: [],
-            savedCredentials: {}
-          },
-          history: []
-        };
+          password,
+        });
 
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([profile]);
-
-        if (!profileError) {
-          setUser(profile);
-          return true;
+        if (error) {
+          console.error('Signup error:', error.message);
+          return false;
         }
+
+        if (data.user) {
+          // Create user profile
+          const profile = {
+            id: data.user.id,
+            email,
+            name,
+            progress: {
+              unitsCompleted: 0,
+              codingProblems: 0,
+              flashcardsMastered: 0,
+              robotChallenges: 0
+            },
+            achievements: [],
+            join_date: new Date().toISOString(),
+            review_cards: [],
+            profile: {
+              studyStreak: 0,
+              totalStudyTime: 0,
+              practiceToolsUsed: [],
+              savedCredentials: {}
+            },
+            history: []
+          };
+
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([profile]);
+
+          if (!profileError) {
+            // Transform to User interface
+            const userData: User = {
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              progress: profile.progress,
+              achievements: profile.achievements,
+              joinDate: profile.join_date,
+              reviewCards: profile.review_cards,
+              profile: profile.profile,
+              history: profile.history
+            };
+            setUser(userData);
+            return true;
+          } else {
+            console.error('Profile creation error:', profileError);
+          }
+        }
+      } catch (error) {
+        console.error('Signup error:', error);
+        return false;
       }
     } else {
       // Fallback to localStorage
@@ -256,7 +322,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       users.push(newUser);
       localStorage.setItem('apcsp_users', JSON.stringify(users));
       
-      const userData = {
+      const userData: User = {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
@@ -292,7 +358,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...user,
       progress: {
         ...user.progress,
-        [section]: user.progress[section as keyof typeof user.progress] + increment
+        [section]: Math.max(0, user.progress[section as keyof typeof user.progress] + increment)
       }
     };
     
@@ -309,7 +375,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
       const userIndex = users.findIndex((u: any) => u.id === user.id);
       if (userIndex !== -1) {
-        users[userIndex].progress = updatedUser.progress;
+        users[userIndex] = { ...users[userIndex], progress: updatedUser.progress };
         localStorage.setItem('apcsp_users', JSON.stringify(users));
       }
     }
@@ -329,11 +395,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured) {
       await supabase
         .from('profiles')
-        .update({ reviewCards: updatedReviewCards })
+        .update({ review_cards: updatedReviewCards })
         .eq('id', user.id);
-    
     } else {
       localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
+      
+      const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
+      const userIndex = users.findIndex((u: any) => u.id === user.id);
+      if (userIndex !== -1) {
+        users[userIndex] = { ...users[userIndex], reviewCards: updatedReviewCards };
+        localStorage.setItem('apcsp_users', JSON.stringify(users));
+      }
     }
   };
 
@@ -347,10 +419,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured) {
       await supabase
         .from('profiles')
-        .update({ reviewCards: updatedReviewCards })
+        .update({ review_cards: updatedReviewCards })
         .eq('id', user.id);
     } else {
       localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
+      
+      const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
+      const userIndex = users.findIndex((u: any) => u.id === user.id);
+      if (userIndex !== -1) {
+        users[userIndex] = { ...users[userIndex], reviewCards: updatedReviewCards };
+        localStorage.setItem('apcsp_users', JSON.stringify(users));
+      }
     }
   };
 
@@ -368,6 +447,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', user.id);
     } else {
       localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
+      
+      const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
+      const userIndex = users.findIndex((u: any) => u.id === user.id);
+      if (userIndex !== -1) {
+        users[userIndex] = { ...users[userIndex], profile: updatedProfile };
+        localStorage.setItem('apcsp_users', JSON.stringify(users));
+      }
     }
   };
 
@@ -404,6 +490,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', user.id);
     } else {
       localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
+      
+      const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
+      const userIndex = users.findIndex((u: any) => u.id === user.id);
+      if (userIndex !== -1) {
+        users[userIndex] = { 
+          ...users[userIndex], 
+          history: updatedHistory,
+          profile: updatedProfile
+        };
+        localStorage.setItem('apcsp_users', JSON.stringify(users));
+      }
     }
   };
 
