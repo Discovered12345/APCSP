@@ -1,60 +1,51 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { X, User, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface AuthModalProps {
+  isOpen: boolean;
   onClose: () => void;
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const { login, signup } = useAuth();
+  const [localError, setLocalError] = useState('');
+  const { login, signup, isLoading, error: authError } = useAuth();
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
+    setLocalError('');
 
-    try {
-      let success = false;
-      if (isLogin) {
-        success = await login(email, password);
-        if (!success) {
-          setError('Invalid email or password. Please check your credentials and try again.');
-        }
-      } else {
-        if (name.trim().length < 2) {
-          setError('Name must be at least 2 characters');
-          setIsLoading(false);
-          return;
-        }
-        if (password.length < 6) {
-          setError('Password must be at least 6 characters');
-          setIsLoading(false);
-          return;
-        }
-        success = await signup(email, password, name);
-        if (!success) {
-          setError('Failed to create account. Please try again or check if the email is already in use.');
-        }
-      }
+    // Validation
+    if (!email || !password || (!isLogin && !name)) {
+      setLocalError('Please fill in all fields');
+      return;
+    }
 
-      if (success) {
-        onClose();
-      }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
+    if (password.length < 6) {
+      setLocalError('Password must be at least 6 characters');
+      return;
+    }
+
+    const success = isLogin 
+      ? await login(email, password)
+      : await signup(email, password, name);
+
+    if (success) {
+      onClose();
+      setEmail('');
+      setPassword('');
+      setName('');
+      setLocalError('');
     }
   };
+
+  const displayError = localError || authError;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -67,6 +58,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
+              disabled={isLoading}
             >
               <X className="h-6 w-6" />
             </button>
@@ -84,9 +76,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                     placeholder="Enter your full name"
                     required={!isLogin}
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -102,9 +95,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   placeholder="Enter your email"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -116,27 +110,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   placeholder="Enter your password"
                   required
-                  minLength={6}
+                  disabled={isLoading}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
               </div>
             </div>
 
-            {error && (
+            {displayError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-red-600 text-sm">{error}</p>
+                <p className="text-red-600 text-sm">{displayError}</p>
               </div>
             )}
 
@@ -155,9 +142,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
               <button
                 onClick={() => {
                   setIsLogin(!isLogin);
-                  setError('');
+                  setLocalError('');
                 }}
                 className="ml-1 text-blue-600 hover:text-blue-700 font-medium"
+                disabled={isLoading}
               >
                 {isLogin ? 'Sign up' : 'Sign in'}
               </button>

@@ -1,48 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  progress: {
-    unitsCompleted: number;
-    codingProblems: number;
-    flashcardsMastered: number;
-    robotChallenges: number;
-  };
-  achievements: string[];
-  joinDate: string;
-  reviewCards: number[];
-  profile: {
-    avatar?: string;
-    bio?: string;
-    studyStreak: number;
-    totalStudyTime: number; // in minutes
-    practiceToolsUsed: string[];
-    savedCredentials: {
-      cmu?: { username: string; password: string };
-      codingbat?: { username: string; password: string };
-      exercism?: { username: string; password: string };
-    };
-  };
-  history: {
-    date: string;
-    activity: string;
-    duration: number; // in minutes
-    type: 'units' | 'flashcards' | 'practice-tools';
-  }[];
-}
+import { apiClient, isServerAvailable, type User } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => void;
-  updateProgress: (section: string, increment: number) => void;
-  addToReview: (cardId: number) => void;
-  removeFromReview: (cardId: number) => void;
+  updateProgress: (section: string, data: any) => void;
+  updateStats: (stats: Partial<User['stats']>) => void;
   updateProfile: (updates: Partial<User['profile']>) => void;
-  addActivity: (activity: string, duration: number, type: 'units' | 'flashcards' | 'practice-tools') => void;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,193 +25,140 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load user from localStorage for now
-    const storedUser = localStorage.getItem('apcsp_user');
-    if (storedUser) {
+    // Check server connection and try to restore user session
+    const initializeAuth = async () => {
       try {
-        const userData = JSON.parse(storedUser);
-        // Ensure all required fields exist with defaults
-        const completeUser = {
-          ...userData,
-          progress: userData.progress || {
-            unitsCompleted: 0,
-            codingProblems: 0,
-            flashcardsMastered: 0,
-            robotChallenges: 0
-          },
-          achievements: userData.achievements || [],
-          reviewCards: userData.reviewCards || [],
-          profile: {
-            studyStreak: 0,
-            totalStudyTime: 0,
-            practiceToolsUsed: [],
-            savedCredentials: {},
-            ...userData.profile
-          },
-          history: userData.history || []
-        };
-        setUser(completeUser);
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem('apcsp_user');
+        // Check if server is available
+        const serverAvailable = await isServerAvailable();
+        
+        if (!serverAvailable) {
+          setError('Unable to connect to server. Please check your connection.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Try to restore user session if token exists
+        if (apiClient.isAuthenticated()) {
+          const { user: currentUser, error: profileError } = await apiClient.getUserProfile();
+          
+          if (currentUser) {
+            setUser(currentUser);
+          } else if (profileError) {
+            // Clear invalid token
+            apiClient.logout();
+            setError(null);
+          }
+        }
+        
+        setIsLoading(false);
+      } catch (err: any) {
+        setError(`Failed to initialize: ${err.message}`);
+        setIsLoading(false);
       }
-    }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
-    const existingUser = users.find((u: any) => u.email === email && u.password === password);
-    
-    if (existingUser) {
-      const userData: User = {
-        id: existingUser.id,
-        email: existingUser.email,
-        name: existingUser.name,
-        progress: existingUser.progress || {
-          unitsCompleted: 0,
-          codingProblems: 0,
-          flashcardsMastered: 0,
-          robotChallenges: 0
-        },
-        achievements: existingUser.achievements || [],
-        joinDate: existingUser.joinDate,
-        reviewCards: existingUser.reviewCards || [],
-        profile: {
-          studyStreak: 0,
-          totalStudyTime: 0,
-          practiceToolsUsed: [],
-          savedCredentials: {},
-          ...existingUser.profile
-        },
-        history: existingUser.history || []
-      };
-      setUser(userData);
-      localStorage.setItem('apcsp_user', JSON.stringify(userData));
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { user: loggedInUser, error: loginError } = await apiClient.login(email, password);
+      
+      if (loginError) {
+        setError(loginError);
+        return false;
+      }
+
+      if (!loggedInUser) {
+        setError('Login failed');
+        return false;
+      }
+      
+      setUser(loggedInUser);
       return true;
+    } catch (err: any) {
+      setError(`Login failed: ${err.message}`);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    
-    return false;
   };
 
   const signup = async (email: string, password: string, name: string): Promise<boolean> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
-    const existingUser = users.find((u: any) => u.email === email);
-    
-    if (existingUser) {
-      return false;
-    }
-    
-    const newUser = {
-      id: Date.now().toString(),
-      email,
-      password,
-      name,
-      progress: {
-        unitsCompleted: 0,
-        codingProblems: 0,
-        flashcardsMastered: 0,
-        robotChallenges: 0
-      },
-      achievements: [],
-      joinDate: new Date().toISOString(),
-      reviewCards: [],
-      profile: {
-        studyStreak: 0,
-        totalStudyTime: 0,
-        practiceToolsUsed: [],
-        savedCredentials: {}
-      },
-      history: []
-    };
-    
-    users.push(newUser);
-    localStorage.setItem('apcsp_users', JSON.stringify(users));
-    
-    const userData: User = {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      progress: newUser.progress,
-      achievements: newUser.achievements,
-      joinDate: newUser.joinDate,
-      reviewCards: newUser.reviewCards,
-      profile: newUser.profile,
-      history: newUser.history
-    };
-    
-    setUser(userData);
-    localStorage.setItem('apcsp_user', JSON.stringify(userData));
-    return true;
-  };
+    setIsLoading(true);
+    setError(null);
 
-  const logout = async () => {
-    localStorage.removeItem('apcsp_user');
-    setUser(null);
-  };
-
-  const updateProgress = async (section: string, increment: number) => {
-    if (!user) return;
-    
-    const updatedUser = {
-      ...user,
-      progress: {
-        ...user.progress,
-        [section]: Math.max(0, user.progress[section as keyof typeof user.progress] + increment)
+    try {
+      const { user: newUser, error: signupError } = await apiClient.signup(email, name, password);
+      
+      if (signupError) {
+        setError(signupError);
+        return false;
       }
-    };
-    
-    setUser(updatedUser);
-    localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
-    
-    const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
-    const userIndex = users.findIndex((u: any) => u.id === user.id);
-    if (userIndex !== -1) {
-      users[userIndex] = { ...users[userIndex], progress: updatedUser.progress };
-      localStorage.setItem('apcsp_users', JSON.stringify(users));
+
+      if (!newUser) {
+        setError('Signup failed');
+        return false;
+      }
+      
+      setUser(newUser);
+      return true;
+    } catch (err: any) {
+      setError(`Signup failed: ${err.message}`);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const addToReview = async (cardId: number) => {
+  const logout = () => {
+    apiClient.logout();
+    setUser(null);
+    setError(null);
+  };
+
+  const updateProgress = async (section: string, data: any) => {
     if (!user) return;
     
-    const updatedReviewCards = [...user.reviewCards];
-    if (!updatedReviewCards.includes(cardId)) {
-      updatedReviewCards.push(cardId);
-    }
+    const newProgress = { ...user.progress, [section]: data };
     
-    const updatedUser = { ...user, reviewCards: updatedReviewCards };
-    setUser(updatedUser);
-    localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
-    
-    const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
-    const userIndex = users.findIndex((u: any) => u.id === user.id);
-    if (userIndex !== -1) {
-      users[userIndex] = { ...users[userIndex], reviewCards: updatedReviewCards };
-      localStorage.setItem('apcsp_users', JSON.stringify(users));
+    try {
+      const { error } = await apiClient.updateUserProgress(newProgress);
+      if (error) {
+        setError(`Failed to update progress: ${error}`);
+        return;
+      }
+      
+      const updatedUser = { ...user, progress: newProgress };
+      setUser(updatedUser);
+    } catch (err: any) {
+      setError(`Failed to update progress: ${err.message}`);
     }
   };
 
-  const removeFromReview = async (cardId: number) => {
+  const updateStats = async (statsUpdates: Partial<User['stats']>) => {
     if (!user) return;
     
-    const updatedReviewCards = user.reviewCards.filter(id => id !== cardId);
-    const updatedUser = { ...user, reviewCards: updatedReviewCards };
-    setUser(updatedUser);
-    localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
+    const newStats = { ...user.stats, ...statsUpdates };
     
-    const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
-    const userIndex = users.findIndex((u: any) => u.id === user.id);
-    if (userIndex !== -1) {
-      users[userIndex] = { ...users[userIndex], reviewCards: updatedReviewCards };
-      localStorage.setItem('apcsp_users', JSON.stringify(users));
+    try {
+      const { error } = await apiClient.updateUserStats(newStats);
+      if (error) {
+        setError(`Failed to update stats: ${error}`);
+        return;
+      }
+      
+      const updatedUser = { ...user, stats: newStats };
+      setUser(updatedUser);
+    } catch (err: any) {
+      setError(`Failed to update stats: ${err.message}`);
     }
   };
 
@@ -251,67 +166,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     
     const updatedProfile = { ...user.profile, ...updates };
-    const updatedUser = { ...user, profile: updatedProfile };
-    setUser(updatedUser);
-    localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
     
-    const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
-    const userIndex = users.findIndex((u: any) => u.id === user.id);
-    if (userIndex !== -1) {
-      users[userIndex] = { ...users[userIndex], profile: updatedProfile };
-      localStorage.setItem('apcsp_users', JSON.stringify(users));
+    try {
+      const { error } = await apiClient.updateUserProfile(updatedProfile);
+      if (error) {
+        setError(`Failed to update profile: ${error}`);
+        return;
+      }
+      
+      const updatedUser = { ...user, profile: updatedProfile };
+      setUser(updatedUser);
+    } catch (err: any) {
+      setError(`Failed to update profile: ${err.message}`);
     }
   };
 
-  const addActivity = async (activity: string, duration: number, type: 'units' | 'flashcards' | 'practice-tools') => {
-    if (!user) return;
-    
-    const newActivity = {
-      date: new Date().toISOString(),
-      activity,
-      duration,
-      type
-    };
-    
-    const updatedHistory = [newActivity, ...user.history].slice(0, 50); // Keep last 50 activities
-    const updatedProfile = {
-      ...user.profile,
-      totalStudyTime: user.profile.totalStudyTime + duration
-    };
-    
-    const updatedUser = { 
-      ...user, 
-      history: updatedHistory,
-      profile: updatedProfile
-    };
-    setUser(updatedUser);
-    localStorage.setItem('apcsp_user', JSON.stringify(updatedUser));
-    
-    const users = JSON.parse(localStorage.getItem('apcsp_users') || '[]');
-    const userIndex = users.findIndex((u: any) => u.id === user.id);
-    if (userIndex !== -1) {
-      users[userIndex] = { 
-        ...users[userIndex], 
-        history: updatedHistory,
-        profile: updatedProfile
-      };
-      localStorage.setItem('apcsp_users', JSON.stringify(users));
-    }
+  const contextValue: AuthContextType = {
+    user,
+    login,
+    signup,
+    logout,
+    updateProgress,
+    updateStats,
+    updateProfile,
+    isLoading,
+    error,
   };
 
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      signup, 
-      logout, 
-      updateProgress, 
-      addToReview, 
-      removeFromReview,
-      updateProfile,
-      addActivity
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

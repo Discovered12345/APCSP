@@ -9,7 +9,13 @@ const UnitsSection: React.FC = () => {
   const [showResult, setShowResult] = useState(false);
   const [completedQuestions, setCompletedQuestions] = useState<Set<string>>(new Set());
   
-  const { user, updateProgress } = useAuth();
+  const { user, updateProgress, updateStats } = useAuth();
+
+  // Helper function to get completed questions count for a specific unit
+  const getUnitProgress = (unitId: number) => {
+    if (!user?.progress.unitsProgress) return 0;
+    return user.progress.unitsProgress[`unit${unitId}`] || 0;
+  };
 
   // If user is not authenticated, show lock screen
   if (!user) {
@@ -54,7 +60,7 @@ const UnitsSection: React.FC = () => {
         '1.2 Program Design and Development', 
         '1.3 Identifying and Correcting Errors'
       ],
-      completed: user?.progress.unitsCompleted || 0,
+      completed: getUnitProgress(1),
       total: 30,
       color: 'bg-gradient-to-br from-pink-500 to-rose-600',
       hoverColor: 'hover:from-pink-600 hover:to-rose-700',
@@ -94,7 +100,7 @@ const UnitsSection: React.FC = () => {
         '2.3 Extracting Information from Data',
         '2.4 Using Programs with Data'
       ],
-      completed: user?.progress.unitsCompleted || 0,
+      completed: getUnitProgress(2),
       total: 35,
       color: 'bg-gradient-to-br from-blue-500 to-cyan-600',
       hoverColor: 'hover:from-blue-600 hover:to-cyan-700',
@@ -148,7 +154,7 @@ const UnitsSection: React.FC = () => {
         '3.17 Algorithmic Efficiency',
         '3.18 Undecidable Problems'
       ],
-      completed: user?.progress.unitsCompleted || 0,
+      completed: getUnitProgress(3),
       total: 45,
       color: 'bg-gradient-to-br from-green-500 to-emerald-600',
       hoverColor: 'hover:from-green-600 hover:to-emerald-700',
@@ -187,7 +193,7 @@ const UnitsSection: React.FC = () => {
         '4.2 Fault Tolerance',
         '4.3 Parallel and Distributed Computing'
       ],
-      completed: user?.progress.unitsCompleted || 0,
+      completed: getUnitProgress(4),
       total: 25,
       color: 'bg-gradient-to-br from-purple-500 to-violet-600',
       hoverColor: 'hover:from-purple-600 hover:to-violet-700',
@@ -229,7 +235,7 @@ const UnitsSection: React.FC = () => {
         '5.5 Legal and Ethical Concerns',
         '5.6 Safe Computing'
       ],
-      completed: user?.progress.unitsCompleted || 0,
+      completed: getUnitProgress(5),
       total: 20,
       color: 'bg-gradient-to-br from-orange-500 to-red-600',
       hoverColor: 'hover:from-orange-600 hover:to-red-700',
@@ -271,10 +277,23 @@ const UnitsSection: React.FC = () => {
     setShowResult(true);
     
     const questionKey = `${selectedUnit}-${currentQuestion}`;
-    if (answerIndex === unit.questions[currentQuestion].correct && !completedQuestions.has(questionKey)) {
+    if (!completedQuestions.has(questionKey)) {
       setCompletedQuestions(prev => new Set(prev).add(questionKey));
       if (user) {
-        updateProgress('unitsCompleted', 1);
+        // Update per-unit progress (count every attempted question)
+        const currentUnitProgress = user.progress.unitsProgress || {};
+        const currentCount = currentUnitProgress[`unit${selectedUnit}`] || 0;
+        updateProgress('unitsProgress', {
+          ...currentUnitProgress,
+          [`unit${selectedUnit}`]: currentCount + 1
+        });
+        
+        // Update global stats
+        const isCorrect = answerIndex === unit.questions[currentQuestion].correct;
+        updateStats({
+          totalQuestions: (user.stats.totalQuestions || 0) + 1,
+          correctAnswers: (user.stats.correctAnswers || 0) + (isCorrect ? 1 : 0)
+        });
       }
     }
   };
@@ -600,7 +619,7 @@ const UnitsSection: React.FC = () => {
         })}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }

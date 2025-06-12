@@ -10,10 +10,34 @@ const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
   const { user } = useAuth();
 
   const stats = user ? [
-    { label: 'Units Completed', value: `${user.progress.unitsCompleted}/130`, icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    { label: 'Practice Tools Used', value: '8/12', icon: Code, color: 'text-green-600', bgColor: 'bg-green-100' },
-    { label: 'Flashcards Mastered', value: `${user.progress.flashcardsMastered}/500`, icon: Brain, color: 'text-purple-600', bgColor: 'bg-purple-100' },
-    { label: 'Study Streak', value: '7 days', icon: Target, color: 'text-orange-600', bgColor: 'bg-orange-100' },
+    { 
+      label: 'Units Completed', 
+      value: `${Object.values(user.progress.unitsProgress || {}).reduce((acc: number, curr: any) => acc + (curr || 0), 0)}/130`, 
+      icon: BookOpen, 
+      color: 'text-blue-600', 
+      bgColor: 'bg-blue-100' 
+    },
+    { 
+      label: 'Practice Tools Used', 
+      value: `${user.progress.toolsUsed || 0}/12`, 
+      icon: Code, 
+      color: 'text-green-600', 
+      bgColor: 'bg-green-100' 
+    },
+    { 
+      label: 'Questions Correct', 
+      value: `${user.stats.correctAnswers || 0}/${user.stats.totalQuestions || 0}`, 
+      icon: Brain, 
+      color: 'text-purple-600', 
+      bgColor: 'bg-purple-100' 
+    },
+    { 
+      label: 'Study Streak', 
+      value: `${user.stats.streak || 0} days`, 
+      icon: Target, 
+      color: 'text-orange-600', 
+      bgColor: 'bg-orange-100' 
+    },
   ] : [
     { label: 'Units Available', value: '130+', icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-100' },
     { label: 'Practice Tools', value: '12+', icon: Code, color: 'text-green-600', bgColor: 'bg-green-100' },
@@ -29,7 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
       icon: BookOpen,
       color: 'bg-gradient-to-br from-blue-500 to-blue-600',
       hoverColor: 'hover:from-blue-600 hover:to-blue-700',
-      progress: user ? Math.round((user.progress.unitsCompleted / 130) * 100) : 0,
+      progress: user ? Math.round((Object.values(user.progress.unitsProgress || {}).reduce((acc: number, curr: any) => acc + (curr || 0), 0) / 130) * 100) : 0,
       features: ['130+ practice questions', 'Interactive quizzes', 'Progress tracking', 'Detailed explanations'],
       accent: 'blue',
       requiresAuth: true
@@ -53,21 +77,57 @@ const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
       icon: Brain,
       color: 'bg-gradient-to-br from-purple-500 to-purple-600',
       hoverColor: 'hover:from-purple-600 hover:to-purple-700',
-      progress: user ? Math.round((user.progress.flashcardsMastered / 500) * 100) : 0,
+      progress: user ? Math.round(((user.stats.correctAnswers || 0) / Math.max(user.stats.totalQuestions || 1, 1)) * 100) : 0,
       features: ['500+ flashcards', 'Spaced repetition', 'AI explanations', 'Review system'],
       accent: 'purple',
       requiresAuth: true
     }
   ];
 
-  const achievements = [
-    { name: 'First Steps', description: 'Complete your first unit', icon: Star, earned: true, color: 'text-yellow-600' },
-    { name: 'Tool Master', description: 'Use 5 different practice tools', icon: Code, earned: true, color: 'text-green-600' },
-    { name: 'Memory Master', description: 'Master 25 flashcards', icon: Brain, earned: false, color: 'text-purple-600' },
-    { name: 'Binary Expert', description: 'Complete 10 binary conversions', icon: Monitor, earned: false, color: 'text-blue-600' },
-    { name: 'Speed Demon', description: 'Solve a problem in under 30 seconds', icon: Zap, earned: false, color: 'text-yellow-600' },
-    { name: 'Perfectionist', description: 'Get 100% on a unit test', icon: Target, earned: false, color: 'text-red-600' },
-  ];
+  const achievements = user ? [
+    { 
+      name: 'First Steps', 
+      description: 'Complete your first unit', 
+      icon: Star, 
+      earned: Object.values(user.progress.unitsProgress || {}).reduce((acc: number, curr: any) => acc + (curr || 0), 0) >= 1, 
+      color: 'text-yellow-600' 
+    },
+    { 
+      name: 'Tool Master', 
+      description: 'Use 5 different practice tools', 
+      icon: Code, 
+      earned: (user.progress.toolsUsed || 0) >= 5, 
+      color: 'text-green-600' 
+    },
+    { 
+      name: 'Question Master', 
+      description: 'Answer 25 questions correctly', 
+      icon: Brain, 
+      earned: (user.stats.correctAnswers || 0) >= 25, 
+      color: 'text-purple-600' 
+    },
+    { 
+      name: 'Streak Champion', 
+      description: 'Maintain a 7-day study streak', 
+      icon: Target, 
+      earned: (user.stats.streak || 0) >= 7, 
+      color: 'text-orange-600' 
+    },
+    { 
+      name: 'Knowledge Seeker', 
+      description: 'Complete 50 practice questions', 
+      icon: Monitor, 
+      earned: (user.stats.totalQuestions || 0) >= 50, 
+      color: 'text-blue-600' 
+    },
+    { 
+      name: 'Perfectionist', 
+      description: 'Achieve 90% accuracy', 
+      icon: Zap, 
+      earned: user.stats.totalQuestions > 0 && ((user.stats.correctAnswers || 0) / user.stats.totalQuestions) >= 0.9, 
+      color: 'text-green-600' 
+    },
+  ] : [];
 
   return (
     <div className="space-y-8">
@@ -279,13 +339,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
             Recent Activity
           </h2>
           <div className="space-y-4">
-            {[
-              { action: 'Completed Unit 3: Algorithms and Programming', time: '2 hours ago', type: 'unit', color: 'blue' },
-              { action: 'Used RGB/HEX converter tool', time: '4 hours ago', type: 'tool', color: 'green' },
-              { action: 'Mastered 15 new flashcards on Data Structures', time: '1 day ago', type: 'flashcard', color: 'purple' },
-              { action: 'Practiced binary conversions', time: '2 days ago', type: 'practice', color: 'orange' },
-              { action: 'Earned "Tool Master" achievement', time: '3 days ago', type: 'achievement', color: 'yellow' },
-            ].map((activity, index) => (
+            {(user?.progress.recentActivities || [
+              { action: 'Welcome to APCSP Practice! Start by exploring the units.', time: 'Just now', type: 'welcome', color: 'blue' },
+              { action: 'Create an account to track your progress', time: 'Now', type: 'signup', color: 'green' },
+              { action: 'Complete your first practice questions', time: 'Soon', type: 'practice', color: 'purple' },
+                         ]).slice(0, 5).map((activity: any, index: number) => (
               <div 
                 key={index} 
                 className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 transform hover:translate-x-2 cursor-pointer group"
@@ -306,7 +364,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }
