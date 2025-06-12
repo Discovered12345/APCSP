@@ -2,7 +2,8 @@
 
 Welcome to the **AP Computer Science Principles Practice Hub** – a fully interactive website designed to help students master APCSP concepts through hands-on coding, quizzes, simulators, and cybersecurity challenges. Built with learners in mind, this platform combines engaging tools, visualizations, and real-world scenarios to make computer science accessible and fun.
 
-![Website Banner](images/banner.png) <!-- Replace with actual image path -->
+![image](https://github.com/user-attachments/assets/a1fd7854-a18c-4836-892f-468ef473518b)
+
 
 ---
 
@@ -66,21 +67,3 @@ This site supports APCSP students by offering:
 
 ---
 
-## 🛠️ Setup Instructions
-
-```bash
-# Clone the repo
-git clone https://github.com/your-username/apcsp-practice-hub.git
-cd apcsp-practice-hub
-
-# Install dependencies
-npm install
-
-# Create .env file and set your Supabase credentials
-touch .env
-# Inside .env:
-# NEXT_PUBLIC_SUPABASE_URL=your-url
-# NEXT_PUBLIC_SUPABASE_ANON_KEY=your-key
-
-# Start the development server
-npm run dev
