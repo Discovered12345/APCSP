@@ -59,11 +59,10 @@ This site supports APCSP students by offering:
 
 ## 🧱 Tech Stack
 
-- **Frontend:** HTML, CSS, JavaScript, TailwindCSS
-- **Backend:** [Supabase](https://supabase.com) (auth & database)
-- **Authentication:** Email sign-up / login
-- **Hosting:** [Vercel](https://vercel.com) or [Netlify](https://www.netlify.com)
-- **Data Management:** JSON + Supabase tables
+- **Frontend:** HTML, CSS, JavaScript, TailwindCSS (Andrew made)
+- **Backend:** Neon (Paarth made)
+- **Authentication:** Neon - Email sign up / login
+- **Data Management:** Neon - same for authentication
 
 ---
 
